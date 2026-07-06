@@ -43,15 +43,17 @@ static void check_KP(double K1, double K2, double P1, double P2) {
     if (!(K1 > 0 && K1 < 1 && K2 > 0 && K2 < 1)) die("--K1,--K2 must be in (0,1)");
     if (!(P1 > 0 && P1 < 1 && P2 > 0 && P2 < 1)) die("--P1,--P2 must be in (0,1)");
 }
-// Optional per-subtype PRS case/control AUC (--auc1/--auc2): both-or-neither, in (0.5,1).
+// Optional per-subtype PRS case/control AUC (--auc1/--auc2): both-or-neither, in
+// (0.5, 0.9999). The upper bound matches auc_to_corr_liab()'s domain in gensep.cpp — an
+// auc >= 0.9999 would pass here but yield NaN internally (Rsq nan -> prs_auc NA).
 // When present, gensep additionally reports the finite-PRS case-case AUC (point-only).
 static bool parse_auc(std::map<std::string, std::string>& o, double& auc1, double& auc2) {
     int n = (int)o.count("auc1") + (int)o.count("auc2");
     if (n == 0) return false;
     if (n != 2) die("--auc1 and --auc2 must be given together");
     auc1 = opt_d(o, "auc1"); auc2 = opt_d(o, "auc2");
-    if (!(auc1 > 0.5 && auc1 < 1.0 && auc2 > 0.5 && auc2 < 1.0))
-        die("--auc1,--auc2 (PRS case/control AUC) must be in (0.5, 1)");
+    if (!(auc1 > 0.5 && auc1 < 0.9999 && auc2 > 0.5 && auc2 < 0.9999))
+        die("--auc1,--auc2 (PRS case/control AUC) must be in (0.5, 0.9999)");
     return true;
 }
 

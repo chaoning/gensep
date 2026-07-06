@@ -157,7 +157,8 @@ gensep --se-method jackknife \
 ```
 
 - **`--auc1` / `--auc2`** — PRS case/control AUC of subtype 1 / 2 on a held-out test set.
-  Both-or-neither; each must lie in `(0.5, 1)`.
+  Both-or-neither; each must lie in `(0.5, 0.9999)` (the upper bound is the
+  `auc_to_corr_liab` domain — an AUC `≥ 0.9999` is rejected rather than silently `NA`).
 
 gensep converts each AUC to a PRS accuracy internally,
 `Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped — the same chain the

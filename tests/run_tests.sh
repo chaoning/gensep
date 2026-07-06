@@ -57,7 +57,9 @@ $BIN --se-method none $PT --out "$TMP/noauc" >/dev/null 2>&1
 if grep -q prs_ "$TMP/noauc.gensep"; then no "no --auc must omit prs rows"; else ok "no --auc omits prs rows"; fi
 if grep -q '^prs_eff' "$TMP/prs.gensep"; then ok "all four prs rows present"; else no "prs rows incomplete"; fi
 expect_err "only --auc1"             $BIN --se-method none $PT --auc1 0.70 --out "$TMP/x"
-expect_err "--auc out of range"      $BIN --se-method none $PT --auc1 0.4 --auc2 0.65 --out "$TMP/x"
+expect_err "--auc too low"           $BIN --se-method none $PT --auc1 0.4 --auc2 0.65 --out "$TMP/x"
+# reject auc >= 0.9999 (auc_to_corr_liab domain) rather than silently emitting NA
+expect_err "--auc >= 0.9999"         $BIN --se-method none $PT --auc1 0.99995 --auc2 0.65 --out "$TMP/x"
 
 echo "jackknife K/P check fires before file I/O (consistency with point mode):"
 expect_err "jackknife bad P" $BIN --se-method jackknife --tagfile /no/such --summary a --summary2 b \

@@ -118,7 +118,7 @@ the AUC achievable with those finite-accuracy PRS:
 ```sh
 gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \
        --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
-       --auc1 0.75 --auc2 0.68 --out PREFIX          # both-or-neither, each in (0.5,1)
+       --auc1 0.75 --auc2 0.68 --out PREFIX          # both-or-neither, each in (0.5, 0.9999)
 ```
 
 `--auc1/--auc2` work in **every** `--se-method` mode (they use only the point
