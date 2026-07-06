@@ -1,0 +1,12 @@
+# Build artifacts
+src/*.o
+src/*.d
+/gensep
+
+# Vendored Eigen: a machine-specific symlink, not tracked. Provide it locally with
+#   ln -s /path/to/eigen third_party/eigen      (or: make EIGEN=/path/to/eigen)
+third_party/eigen
+
+# Editor / OS cruft
+*.swp
+.DS_Store

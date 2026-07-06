@@ -1,0 +1,96 @@
+# Theme settings
+remote_theme: allejo/jekyll-docs-theme
+
+# Project information
+name: gensep
+description: "Genetic separation from GWAS summary statistics, with jackknife / Monte-Carlo / delta standard errors."
+
+project:
+  version: 1.0.0
+
+# License information
+license:
+  software: GPL-3.0
+  software_url: https://www.gnu.org/licenses/gpl-3.0.html
+
+collections:
+  documentation:
+    output: true
+    permalink: /documentation/:name/
+
+# Navigation menu
+nav:
+  - title: "Installation"
+    url: /documentation/02_installation/
+  - title: "Tutorial"
+    url: /documentation/03_Tutorial/
+  - title: "Method"
+    url: /documentation/04_Method/
+
+
+# Navigation links
+links:
+  header:
+    - title: GitHub
+      icon: github
+      brand: true
+      url: https://github.com/chaoning/gensep
+  homepage:
+    - title: "View on GitHub"
+      icon: github
+      brand: true
+      url: https://github.com/chaoning/gensep
+  footer:
+    - title: GitHub
+      icon: github
+      brand: true
+      url: https://github.com/chaoning/gensep
+    - title: Report Issues
+      icon: bug
+      url: https://github.com/chaoning/gensep/issues
+
+# UI theme settings
+ui:
+  mode: 'auto'  # Options: 'auto', 'dark', 'light'
+  brand:
+    dark: "#38c6ff"   # cyan brand for dark mode
+    light: "#0277bd"  # scientific blue brand for light mode
+  border_color:
+    dark: "#5f5f5f"
+    light: "#dbe4ea"  # slightly cool border to match the blue scheme
+  header:
+    trianglify: true
+    dark:
+      color1: "#0a1f33"  # deep navy
+      color2: "#2c6f97"  # steel blue
+    light:
+      color1: "#0a2540"  # deep navy
+      color2: "#2a6f97"  # steel blue
+  masthead:
+    color:
+      dark: "#ffffff"
+      light: "#ffffff"
+    align:
+      homepage: "center"
+      page: "left"
+
+# Social media links
+social:
+  github:
+    user: chaoning
+    repo: gensep
+  twitter:
+    enabled: false
+  facebook:
+    enabled: false
+
+# Markdown parser
+markdown: kramdown
+
+# Exclude unnecessary files to improve build performance
+exclude:
+  - LICENSE.md
+  - README.md
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
