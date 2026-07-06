@@ -43,6 +43,17 @@ static void check_KP(double K1, double K2, double P1, double P2) {
     if (!(K1 > 0 && K1 < 1 && K2 > 0 && K2 < 1)) die("--K1,--K2 must be in (0,1)");
     if (!(P1 > 0 && P1 < 1 && P2 > 0 && P2 < 1)) die("--P1,--P2 must be in (0,1)");
 }
+// Optional per-subtype PRS case/control AUC (--auc1/--auc2): both-or-neither, in (0.5,1).
+// When present, gensep additionally reports the finite-PRS case-case AUC (point-only).
+static bool parse_auc(std::map<std::string, std::string>& o, double& auc1, double& auc2) {
+    int n = (int)o.count("auc1") + (int)o.count("auc2");
+    if (n == 0) return false;
+    if (n != 2) die("--auc1 and --auc2 must be given together");
+    auc1 = opt_d(o, "auc1"); auc2 = opt_d(o, "auc2");
+    if (!(auc1 > 0.5 && auc1 < 1.0 && auc2 > 0.5 && auc2 < 1.0))
+        die("--auc1,--auc2 (PRS case/control AUC) must be in (0.5, 1)");
+    return true;
+}
 
 static void usage() {
     std::fprintf(stderr,
@@ -62,7 +73,13 @@ static void usage() {
         "    (do NOT pass --se-*).\n"
         "\n"
         "--se-method is required (no default).\n"
-        "Writes PREFIX.gensep: hsq1/2 (obs+liab), rg, VS, h2cc, auc, auc_lo, each with SE.\n");
+        "\n"
+        "  Optional (any mode): --auc1 <v> --auc2 <v>  per-subtype PRS case/control AUC.\n"
+        "    Adds the finite-PRS case-case AUC (prs_auc, prs_auc_lo, h2cc_prs, prs_eff),\n"
+        "    point-only (no SE), computed from the point hsq*_liab/rg + K.\n"
+        "\n"
+        "Writes PREFIX.gensep: hsq1/2 (obs+liab), rg, VS, h2cc, auc, auc_lo, each with SE\n"
+        "(+ prs_auc/prs_auc_lo/h2cc_prs/prs_eff when --auc1/--auc2 are given).\n");
 }
 
 static int run_jackknife(std::map<std::string, std::string>& o) {
@@ -75,13 +92,14 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
     check_KP(K1, K2, P1, P2);
     long B = opt_l(o, "num-blocks", 200);
     if (B < 2) die("--num-blocks must be >= 2");
+    double auc1 = 0, auc2 = 0; bool have_auc = parse_auc(o, auc1, auc2);
 
     Tagging T = read_tagfile(tagfile);
     SummaryAligned S1 = read_sumsfile(sum1, T, /*amb=*/0);
     SummaryAligned S2 = read_sumsfile(sum2, T, /*amb=*/0);
     PairData D = qc_pair(T, S1, S2);
 
-    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B);
+    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2);
     write_gensep(out, r);
 
     std::printf("hsq1 obs %.4f(%.4f) liab %.4f(%.4f)  hsq2 obs %.4f(%.4f) liab %.4f(%.4f)  "
@@ -121,9 +139,11 @@ static int run_point(std::map<std::string, std::string>& o, SeMethod method) {
     if (method == SE_MC && ndraw < 2) die("--num-draws must be >= 2");
     long seed = opt_l(o, "seed", 1);
     if (seed < 0) die("--seed must be >= 0");
+    double auc1 = 0, auc2 = 0; bool have_auc = parse_auc(o, auc1, auc2);
 
     SepResult r = gene_sep_point(h1, h2, rg, K1, K2, P1, P2, have_se, se1, se2, ser,
-                                 method, ndraw, (unsigned long long)seed);
+                                 method, ndraw, (unsigned long long)seed,
+                                 have_auc, auc1, auc2);
     write_gensep(out, r);
 
     std::printf("hsq1 obs %.4f(%.4f) liab %.4f(%.4f)  hsq2 obs %.4f(%.4f) liab %.4f(%.4f)  "

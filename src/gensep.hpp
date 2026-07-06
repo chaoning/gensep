@@ -16,6 +16,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <cmath>
 #include "qc.hpp"
 
 namespace gs {
@@ -33,6 +34,13 @@ struct SepResult {
     double hsq1_obs = 0, hsq1_obs_se = 0, hsq1_liab = 0, hsq1_liab_se = 0;
     double hsq2_obs = 0, hsq2_obs_se = 0, hsq2_liab = 0, hsq2_liab_se = 0;
     double rg = 0,       rg_se = 0;
+    // Finite-PRS case-case AUC (only filled when per-subtype PRS AUCs are supplied
+    // via --auc1/--auc2). Point-only, no SE: computed from the point hsq*_liab/rg + K
+    // and the PRS accuracies Rsq_i derived from auc_i. NaN when not requested / out of
+    // domain. See derive_prs() / fill_prs_auc() in gensep.cpp.
+    double prs_auc = NAN, prs_auc_lo = NAN, h2cc_prs = NAN, prs_eff = NAN;
+    double Rsq1 = NAN, Rsq2 = NAN;   // PRS accuracies derived from auc1/auc2 (diagnostic)
+    bool have_prs = false;
 };
 
 // Point estimate inputs: h1obs/h2obs (observed-scale, from sum-hers), rg (sum-cors).
@@ -40,8 +48,12 @@ struct SepResult {
 // Fused jackknife (option A): one common SNP set (PairData), 200 shared blocks.
 // Per leave-one-block-out: h1/h2 via the sum-hers solver (cept=0), rg via sum-cors;
 // point estimates of h1/h2/rg also on the common set -> point and SE fully consistent.
+// have_auc/auc1/auc2: optional per-subtype PRS case/control AUC. When have_auc, the
+// finite-PRS case-case AUC (prs_auc/prs_auc_lo/h2cc_prs/prs_eff) is additionally filled
+// from the point estimates (no SE), identically across every SE method.
 SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, double P2,
-                         int num_blocks = 200);
+                         int num_blocks = 200,
+                         bool have_auc = false, double auc1 = 0, double auc2 = 0);
 
 // SE method for the nonlinear derived quantities (VS/h2cc/auc/auc_lo) in point mode.
 //   SE_MC    — Monte-Carlo: draw (h1,h2,rg) ~ independent Normal(point,se), push each
@@ -66,7 +78,8 @@ SepResult gene_sep_point(double h1obs, double h2obs, double rg,
                          double K1, double K2, double P1, double P2,
                          bool have_se, double se_h1, double se_h2, double se_rg,
                          SeMethod method = SE_MC,
-                         long num_draws = 100000, unsigned long long seed = 1);
+                         long num_draws = 100000, unsigned long long seed = 1,
+                         bool have_auc = false, double auc1 = 0, double auc2 = 0);
 
 void write_gensep(const std::string& prefix, const SepResult& r);
 

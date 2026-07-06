@@ -141,7 +141,40 @@ rg used, the two selection intensities λ, and `n_used` — the number of jackkn
 
 A one-line summary of the same numbers is also printed to standard output.
 
-## 4. Input rules and validation
+## 4. Finite-PRS case-case AUC (`--auc1` / `--auc2`)
+
+`auc` above is the genetic **ceiling** — the AUC if the total genetic value were known
+exactly. If you also pass the per-subtype **PRS case/control AUC** measured on a test set,
+gensep reports the AUC achievable with those finite-accuracy PRS. These options work in
+**every** `--se-method` mode (they use only the point `hsq*_liab`/`rg`):
+
+```bash
+gensep --se-method jackknife \
+       --tagfile HumDef.tagging --summary trait1.summaries --summary2 trait2.summaries \
+       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
+       --auc1 0.75 --auc2 0.68 \
+       --out output/pair
+```
+
+- **`--auc1` / `--auc2`** — PRS case/control AUC of subtype 1 / 2 on a held-out test set.
+  Both-or-neither; each must lie in `(0.5, 1)`.
+
+gensep converts each AUC to a PRS accuracy internally,
+`Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped — the same chain the
+real-data pipeline uses), then evaluates the finite-PRS case-case AUC. Four **point-only**
+rows are appended (`SE` is always `NA`), and the footer gains `Rsq1 Rsq2`:
+
+| Row | Meaning |
+| --- | --- |
+| `prs_auc` | finite-PRS moment-corrected case-case AUC (optimal weights `w_B`) |
+| `prs_auc_lo` | finite-PRS leading-order AUC (weights `w_LO`) |
+| `h2cc_prs` | PRS case-case heritability, `V_PRS / (V_PRS + 4)` |
+| `prs_eff` | PRS efficiency `V_PRS / VS_tgv ∈ [0, 1]` — fraction of the genetic separation the PRS captures |
+
+`prs_auc ≤ auc` always (a finite PRS cannot beat the genetic ceiling). No SE is propagated
+for the PRS-based quantities. See the [Method](./04_Method.html) page for the formula.
+
+## 5. Input rules and validation
 
 - `--se-method` is required; `--K1/--K2/--P1/--P2` must all lie in `(0, 1)`, on **every**
   route.
@@ -150,7 +183,7 @@ A one-line summary of the same numbers is also printed to standard output.
 - SEs must be ≥ 0; `--num-draws` (for `mc`) must be ≥ 2; `--num-blocks` must be ≥ 2.
 - The tagging file must be single-category; summary-statistic numeric fields are validated.
 
-## 5. Summary workflow
+## 6. Summary workflow
 
 1. **From GWAS**: build a tagging file with LDAK, prepare the two `.summaries` files, then
    run `gensep --se-method jackknife …`.

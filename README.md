@@ -109,6 +109,36 @@ auc_lo        ...       ...     # leading-order AUC
 
 `hsq*_liab` SE is just `Lee(K,P) * hsq*_obs SE` (Lee is a constant scaling).
 
+### Finite-PRS case-case AUC (`--auc1` / `--auc2`)
+
+The `auc` above is the genetic **ceiling** (perfect genetic prediction). If you pass the
+per-subtype **PRS case/control AUC** measured on a test set, gensep additionally reports
+the AUC achievable with those finite-accuracy PRS:
+
+```sh
+gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \
+       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
+       --auc1 0.75 --auc2 0.68 --out PREFIX          # both-or-neither, each in (0.5,1)
+```
+
+`--auc1/--auc2` work in **every** `--se-method` mode (they use only the point
+`hsq*_liab`/`rg`). gensep converts each to a PRS accuracy internally —
+`Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped, the same chain the
+real-data pipeline uses) — then evaluates the finite-PRS case-case AUC (a port of
+`case_case_auc.compute_case_case_auc_prs`). It appends four **point-only** rows (`SE` =
+`NA`), and the footer gains `Rsq1 Rsq2`:
+
+```
+prs_auc       0.xxxxxx  NA     # finite-PRS moment-corrected case-case AUC (optimal weights w_B)
+prs_auc_lo    0.xxxxxx  NA     # finite-PRS leading-order AUC (weights w_LO)
+h2cc_prs      0.xxxxxx  NA     # PRS case-case h2 = V_PRS/(V_PRS+4)
+prs_eff       0.xxxxxx  NA     # PRS efficiency = V_PRS / VS_tgv ∈ [0,1]
+```
+
+`prs_auc ≤ auc` (finite PRS never beats the genetic ceiling); `prs_eff` is the fraction
+of the genetic case-case separation the PRS captures. These are point estimates only — no
+SE is propagated for the PRS-based quantities.
+
 `K1,K2` (population prevalences) drive the selection intensity λ and the Lee
 observed→liability transform; `P1,P2` (sample case fractions, not in the summaries)
 are needed by the Lee factor.

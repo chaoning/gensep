@@ -38,7 +38,41 @@ boundaries (`VS ≤ 0`, or `denom ≤ 0` for `auc`). This is what makes their st
 non-trivial, and it is why gensep offers a joint estimator rather than propagating the
 LDAK marginal SEs independently.
 
-## 2. Standard errors
+## 2. Finite-PRS case-case AUC (`--auc1` / `--auc2`)
+
+`auc` above is the genetic **ceiling** — it assumes the total genetic value (TGV) is known
+exactly. A real classifier uses a **polygenic score** of finite accuracy, so its case-case
+AUC is lower. When you supply the per-subtype PRS case/control AUC (`--auc1`, `--auc2`),
+gensep computes that finite-PRS AUC (a port of `case_case_auc.compute_case_case_auc_prs`).
+
+**Step 1 — AUC → PRS accuracy.** Each PRS case/control AUC is converted to a PRS-to-TGV
+squared correlation via the liability threshold model (the same chain the real-data
+pipeline uses, and validated on simulation to `r_loglog ≈ 0.998` against the oracle):
+
+```
+ρ_i   = auc_to_corr_liab(auc_i, K_i)         # Corr(PRS_i, liability_i), Wray 2010
+Rsq_i = clip( ρ_i² / hsq_i_liab , 1e-6, 0.999 )   # = Corr(PRS_i, TGV_i)²
+```
+
+**Step 2 — finite-PRS AUC.** With `h_i = √hsq_i`, `r_i = √Rsq_i`, the two PRS estimates
+`ĝ1, ĝ2` are correlated (`ρ = r1 r2 rg`), so the separation runs through a 2×2 system:
+
+```
+a_PRS = [ r1(λ1 h1 − rg λ2 h2),  r2(λ2 h2 − rg λ1 h1) ]
+Σ_PRS = [[1,−ρ],[−ρ,1]]
+V_PRS = a_PRSᵀ Σ_PRS⁻¹ a_PRS        →  h2cc_prs = V_PRS/(V_PRS+4),  prs_eff = V_PRS/VS_tgv
+B_PRS = 2Σ_PRS − δ1 d1d1ᵀ − δ2 d2d2ᵀ,   d1 = h1[r1,−r2 rg],  d2 = h2[r1 rg,−r2]
+w_LO  = Σ_PRS⁻¹ a_PRS ,   w_B = B_PRS⁻¹ a_PRS         (optimal discriminant weights)
+prs_auc    = Φ( wᵀa / √(2 wᵀΣw − δ1(wᵀd1)² − δ2(wᵀd2)²) )   using w_B  (moment-corrected)
+prs_auc_lo = same with w_LO                                  (leading-order weights)
+```
+
+At `Rsq1 = Rsq2 = 1` this recovers the ceiling `auc`. All 2×2 inverses are closed form (no
+Eigen). Outputs `prs_auc`, `prs_auc_lo`, `h2cc_prs`, `prs_eff` are **point-only** — no SE
+is propagated for them — and are computed identically in every `--se-method` mode, since
+they depend only on the point `hsq*_liab`/`rg` plus the supplied AUCs.
+
+## 3. Standard errors
 
 ### `jackknife` — fused block-jackknife (summary-statistics route)
 
@@ -94,7 +128,7 @@ where it under-spreads or returns `NA`. `n_used` is not applicable and prints `0
 - Near `VS ≈ 0` they diverge; prefer `mc`, whose spread reflects the truncated,
   skewed distribution that `delta` cannot represent.
 
-## 3. The independence caveat (point route)
+## 4. The independence caveat (point route)
 
 Both `mc` and `delta` propagate whatever covariance you give them, and with only **marginal**
 SEs (`se_h1, se_h2, se_rg`) the estimation covariance among `h1, h2, rg` is unknown — so it
@@ -104,16 +138,16 @@ is assumed **zero**. Because `VS` contains the `−2 λ1 λ2 rg √(h1 h2)` cros
 does not have this limitation, because it recomputes `h1, h2, rg` jointly on each block and
 therefore carries their full covariance.
 
-## 4. Limitations
+## 5. Limitations
 
 - **Single-category tagging only.** The sum-cors solver supports one heritability category
   (`num_parts == 1`); a multi-category tagging file is rejected.
 - **Out-of-domain points report `NA`.** A non-positive `VS` (or `denom` for `auc`) is out
   of the AUC/`h2cc` domain; the point value is still reported where defined, but the
   corresponding SE (and undefined AUC) is `NA`.
-- **Point-route SEs assume input independence** (Section 3).
+- **Point-route SEs assume input independence** (Section 4).
 
-## 5. Reference
+## 6. Reference
 
 gensep is a self-contained C++ port of LDAK SumHer (`--sum-hers` / `--sum-cors`), validated
 to six decimals against LDAK for the underlying `.hers` / `.cors` solvers (including the

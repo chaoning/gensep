@@ -48,6 +48,17 @@ expect_err "unknown --se-method"     $BIN --se-method bogus $PT --out "$TMP/x"
 expect_err "none + stray --se-h1"    $BIN --se-method none  $PT --se-h1 0.02 --out "$TMP/x"
 expect_err "mc missing some --se"    $BIN --se-method mc    $PT --se-h1 0.02 --out "$TMP/x"
 
+echo "finite-PRS AUC (--auc1/--auc2):"
+expect_ok  "prs with --auc"          $BIN --se-method none $PT --auc1 0.70 --auc2 0.65 --out "$TMP/prs"
+# point value cross-checked against the Python compute_case_case_auc_prs reference
+PA=$(awk '$1=="prs_auc"{print $2}' "$TMP/prs.gensep")
+if awk "BEGIN{exit !(($PA-0.673704)^2 < 1e-8)}"; then ok "prs_auc value ($PA)"; else no "prs_auc value ($PA != 0.673704)"; fi
+$BIN --se-method none $PT --out "$TMP/noauc" >/dev/null 2>&1
+if grep -q prs_ "$TMP/noauc.gensep"; then no "no --auc must omit prs rows"; else ok "no --auc omits prs rows"; fi
+if grep -q '^prs_eff' "$TMP/prs.gensep"; then ok "all four prs rows present"; else no "prs rows incomplete"; fi
+expect_err "only --auc1"             $BIN --se-method none $PT --auc1 0.70 --out "$TMP/x"
+expect_err "--auc out of range"      $BIN --se-method none $PT --auc1 0.4 --auc2 0.65 --out "$TMP/x"
+
 echo "jackknife K/P check fires before file I/O (consistency with point mode):"
 expect_err "jackknife bad P" $BIN --se-method jackknife --tagfile /no/such --summary a --summary2 b \
                                   --K1 0.01 --K2 0.02 --P1 2.0 --P2 0.5 --out "$TMP/x"
