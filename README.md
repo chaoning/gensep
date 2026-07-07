@@ -1,173 +1,85 @@
-# gensep
+# gensep: **Genetic separation between disease subtypes from GWAS summary statistics**
 
-Genetic separation from GWAS summary statistics. One command: given a tagging file,
-two traits' summaries, and prevalences/sample fractions, it outputs
+## Overview
 
-    hsq1 (obs+liab)  hsq2 (obs+liab)  rg  VS  h2cc  auc_exact  auc_approx
+`gensep` quantifies the **genetic separation** between two disease subtypes (or two related
+traits) from GWAS summary statistics. Given a tagging file and the two traits' summaries —
+or simply their heritability / genetic-correlation point estimates — it reports, on one
+common SNP set:
 
-each with a **block-jackknife SE**.
+- per-subtype SNP heritability, observed and liability scale (`hsq1` / `hsq2`);
+- the genetic correlation `rg`;
+- the genetic-separation variance `VS` and the case–case heritability `h2cc = VS/(VS+4)`;
+- the upper-limit (ceiling) case–case `auc`, and — given per-subtype PRS AUCs — the
+  achievable **finite-PRS** case–case AUC.
 
-A self-contained C++ port of LDAK SumHer (`--sum-hers` / `--sum-cors`), extended with
-the block-jackknife SE on the derived genetic-separation quantities that LDAK does not
-expose (VS / case-case h² / upper-limit AUC are nonlinear functions of jointly-estimated
-h1/h2/rg, so their SE needs a joint jackknife, not LDAK's marginal SEs).
+Every quantity comes with a **standard error**. `gensep` is a self-contained C++ port of
+LDAK SumHer (`--sum-hers` / `--sum-cors`), extended with the joint uncertainty on the
+derived separation quantities that LDAK does not expose — via a fused block-jackknife (from
+summary statistics) or Monte-Carlo / delta propagation (from point estimates).
 
-Design/math in [plan.md](plan.md).
+## Installation
 
-## Build
+`gensep` is a single self-contained C++17 program. There is no external library to
+install — [Eigen](https://eigen.tuxfamily.org) is header-only and vendored — and it links
+statically.
 
-```sh
-make            # -> ./gensep   (C++17, Eigen header-only, statically linked)
+### Prerequisites
+
+- **C++ compiler** with C++17 support. The system GCC is recommended, because it ships the
+  static `libc` / `libm` / `libstdc++` needed for a fully static binary (the conda
+  toolchain usually does not).
+- **GNU make**.
+
+### Installation Steps
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/chaoning/gensep.git
+cd gensep
 ```
 
-The binary is **fully static** (`ldd` → "not a dynamic executable", ~1.2 MB stripped),
-so it runs on any compatible Linux host with no libc/libstdc++ dependency. This needs
-static libc/libm/libstdc++, which the system GCC provides but the conda toolchain does
-not — so the Makefile pins `CXX := /usr/bin/g++` (override with `make CXX=...`).
+#### 2. Provide Eigen
 
-Eigen is vendored at `third_party/eigen` (symlink to
-`/faststorage/project/gensubtypes/chao/code/fastgxe/external/eigen-5.0.0`).
-The Makefile uses `CXXFLAGS :=` (not `?=`) so a conda-exported `CXXFLAGS` cannot
-drop `-Ithird_party/eigen`.
+`gensep` expects Eigen headers at `third_party/eigen`. Point it at your Eigen copy:
 
-## Run
-
-One command; `--se-method` (**required, no default**) selects both the input and the SE
-estimator. All three write the same `PREFIX.gensep` layout.
-
-### `--se-method jackknife` — from summary statistics
-
-```sh
-gensep --se-method jackknife \
-       --tagfile HumDef.tagging --summary g1.summaries --summary2 g2.summaries \
-       --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \
-       [--num-blocks 200] --out PREFIX
+```bash
+ln -s /path/to/eigen third_party/eigen      # or build with: make EIGEN=/path/to/eigen
 ```
 
-Estimates h1/h2 (SumHer), rg (sum-cors) and the derived quantities on one common SNP
-set, SE via the fused block-jackknife (see Method).
+#### 3. Build the Project
 
-> **Single-category tagging only.** The sum-cors solver supports one heritability
-> category (`num_parts == 1`, e.g. `HumDef`/`ldak-thin` GBAT); a multi-category tagging
-> file is rejected with an error. `--num-blocks` must be ≥ 2.
-
-### `--se-method mc|delta|none` — from given point estimates
-
-When you already have observed-scale subtype h² and rg (e.g. from LDSC / a published
-table), skip the solvers and compute the derived quantities directly:
-
-```sh
-gensep --se-method mc --h1 <h2obs1> --h2 <h2obs2> --rg <rg> \
-       --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \
-       --se-h1 s --se-h2 s --se-rg s [--num-draws 100000] [--seed 1] --out PREFIX
+```bash
+make            # -> ./gensep
 ```
 
-`--h1/--h2` are **observed-scale** h² for the two subtypes. The point estimates use the
-exact same `derive()` as the jackknife mode.
+The binary is fully static (`ldd ./gensep` → "not a dynamic executable", ~1.2 MB
+stripped), so it runs on any compatible Linux host with no runtime dependencies.
 
-The `--se-*` inputs are gated by the method:
+#### 4. Run gensep
 
-- **`mc` / `delta`** require **all three** of `--se-h1`, `--se-h2`, `--se-rg` (SEs are
-  emitted; how they propagate is below).
-- **`none`** is for when you have **no SEs**: it computes point values only, the SE column
-  is `NA`, and passing any `--se-*` is an error. (This is the answer to "I only have point
-  estimates" — use `--se-method none`, not a dummy `mc`.)
-
-- `hsq*_obs/liab` and `rg` SEs are analytic (`liab_se = Lee(K,P) · obs_se`, `rg_se` as given).
-- `VS`, `h2cc`, `auc`, `auc_lo` SEs are propagated per `--se-method`:
-  - **`mc`** — Monte-Carlo: draw `(h1,h2,rg)` as **independent** `Normal(point, se)`
-    (`--num-draws`, default 1e5; `--seed`, default 1), push each draw through `derive()`,
-    take the sample SD across draws. Degenerate draws (`VS≤0`; `denom≤0` for `auc`) are
-    dropped, as the jackknife pair-deletion; `n_used(...)` reports how many draws remained.
-  - **`delta`** — first-order propagation `Var(Q) = Σᵢ (∂Q/∂θᵢ · seᵢ)²`, gradient by
-    central finite-difference on the same `derive()`. Deterministic and exact when
-    `derive()` is locally near-linear; **unreliable near a boundary** (`VS`/`denom→0`,
-    where it under-spreads or returns `NA`). `n_used` prints 0 (not applicable).
-  - The two agree to <1% away from boundaries (good mutual check); near `VS≈0` they
-    diverge and `mc` is the one to trust.
-- **Independence caveat (both methods):** with only marginal SEs the h1/h2/rg estimation
-  covariance is unknown, so it is assumed zero. Because VS contains the
-  `−2·λ1·λ2·rg·√(h1·h2)` cross term, a real (usually positive) h1/h2/rg correlation
-  would change `VS_se` — treat the point-mode `VS_se`/`auc_se` as an independence
-  approximation.
-
-Both write `PREFIX.gensep`:
-
-```
-Quantity      Value     SE
-hsq1_obs      ...       ...     # observed-scale h2, trait 1 (sep: SumHer)
-hsq1_liab     ...       ...     # liability-scale h2, trait 1 (= obs * Lee(K1,P1))
-hsq2_obs      ...       ...     # observed-scale h2, trait 2
-hsq2_liab     ...       ...     # liability-scale h2, trait 2
-rg            ...       ...     # genetic correlation (sep: sum-cors)
-VS            ...       ...     # genetic separation variance (built from liability h2)
-h2cc          ...       ...     # case-case h2 = VS/(VS+4)  (observed 50/50 scale)
-auc           ...       ...     # upper-limit (ceiling) AUC
-auc_lo        ...       ...     # leading-order AUC
-# rg_used .. lam1 .. lam2 .. n_used(VS,h2cc) .. n_used(auc) ..   # n_used = blocks (sep) / draws (point)
+```bash
+./gensep --help
 ```
 
-`hsq*_liab` SE is just `Lee(K,P) * hsq*_obs SE` (Lee is a constant scaling).
+### Notes
 
-### Finite-PRS case-case AUC (`--auc1` / `--auc2`)
+- The Makefile pins `CXX := /usr/bin/g++` for static linking; override with `make CXX=...`.
+- Optional OpenMP build: `make OMP=1`.
+- Run the regression suite with `make test`.
+- Rebuild from scratch with `make clean && make`.
 
-The `auc` above is the genetic **ceiling** (perfect genetic prediction). If you pass the
-per-subtype **PRS case/control AUC** measured on a test set, gensep additionally reports
-the AUC achievable with those finite-accuracy PRS:
+## How to use `gensep`
 
-```sh
-gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \
-       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
-       --auc1 0.75 --auc2 0.68 --out PREFIX          # both-or-neither, each in (0.5, 0.9999)
-```
+See the full tutorial in our [documentation](https://chaoning.github.io/gensep).
 
-`--auc1/--auc2` work in **every** `--se-method` mode (they use only the point
-`hsq*_liab`/`rg`). gensep converts each to a PRS accuracy internally —
-`Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped, the same chain the
-real-data pipeline uses) — then evaluates the finite-PRS case-case AUC (a port of
-`case_case_auc.compute_case_case_auc_prs`). It appends four **point-only** rows (`SE` =
-`NA`), and the footer gains `Rsq1 Rsq2`:
+## Citing the work
 
-```
-prs_auc       0.xxxxxx  NA     # finite-PRS moment-corrected case-case AUC (optimal weights w_B)
-prs_auc_lo    0.xxxxxx  NA     # finite-PRS leading-order AUC (weights w_LO)
-h2cc_prs      0.xxxxxx  NA     # PRS case-case h2 = V_PRS/(V_PRS+4)
-prs_eff       0.xxxxxx  NA     # PRS efficiency = V_PRS / VS_tgv ∈ [0,1]
-```
+`gensep` builds on the SumHer method (Speed & Balding, *Nature Genetics* 2019) implemented
+in [LDAK](https://dougspeed.com/ldak/), and on the liability / AUC theory of Wray et al. and
+Lee et al. A `gensep` manuscript is in preparation.
 
-`prs_auc ≤ auc` (finite PRS never beats the genetic ceiling); `prs_eff` is the fraction
-of the genetic case-case separation the PRS captures. These are point estimates only — no
-SE is propagated for the PRS-based quantities.
+## License
 
-`K1,K2` (population prevalences) drive the selection intensity λ and the Lee
-observed→liability transform; `P1,P2` (sample case fractions, not in the summaries)
-are needed by the Lee factor.
-
-## Method (fused jackknife)
-
-One common SNP set (SNPs with summary stats for both traits, strand-ambiguous dropped),
-partitioned into 200 blocks **once**. Per leave-one-block-out:
-- h1, h2 via the SumHer model (Newton, no intercept),
-- rg via the cross-trait model (with intercept),
-
-all on the same retained SNPs, so h1_b/h2_b/rg_b are aligned → VS_b, h2cc_b, AUC_b →
-`SE = sqrt[(B-1)/B · Σ(θ_b - θ̄)²]` (LDAK convention). Point estimates use the same
-common-set estimators, so point and SE are consistent. The covariance among h1,h2,rg is
-captured by recomputing all three on the same blocks (no delta method / covariance matrix).
-
-Degenerate blocks (`VS_b<=0`; `denom<=0` for auc_exact) are dropped from that quantity's
-SE; `B_used(...)` reports how many blocks remained. The point estimate still reports the
-real VS even if negative. rg is clipped to ±0.999 per block (and at the point).
-
-## Validation
-
-The underlying solvers were validated to 6 decimals against LDAK (`.hers`, `.cors`
-including all jackknife SEs and the `-nan` propagation for degenerate Cor blocks) and
-against the Python `case_case_auc` module (VS/h2cc/AUC point estimates) before the tool
-was reduced to this single command. Defaults matched from LDAK source: hers
-`amb=1→here amb=0 (common set), gcon=0, cept=0, chisol=1, tol=1e-3`; cors `amb=0, gcon=0,
-cept=1, oversamp=1, num_blocks=200, tol=1e-4`.
-
-Note: because h1/h2 are estimated on the common (both-trait, amb=0) SNP set, they differ
-slightly from a standalone LDAK `--sum-hers` run (which uses the full single-trait,
-amb=1 set).
+`gensep` is free software released under the [GNU General Public License v3.0 (GPL-3.0)](LICENSE).

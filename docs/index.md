@@ -30,7 +30,7 @@ computed with a single switch, `--se-method`:
 gensep is implemented as an open-source, statically linked C++17 program with no runtime
 dependencies (Eigen is header-only and vendored).
 
-## User's Guide: [Installation](./documentation/02_installation.html) · [Tutorial](./documentation/03_Tutorial.html) · [Method](./documentation/04_Method.html)
+## User's Guide: [Installation](./documentation/02_installation.html) · [Tutorial](./documentation/03_Tutorial.html)
 
 ## Citation
 gensep builds on the SumHer method (Speed & Balding, *Nature Genetics* 2019) implemented

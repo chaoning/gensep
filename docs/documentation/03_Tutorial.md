@@ -84,13 +84,15 @@ gensep --se-method mc \
 - **`--rg`** — genetic correlation between the two subtypes.
 - **`--se-h1` / `--se-h2` / `--se-rg`** — the standard errors of the three inputs. For
   `mc` and `delta` **all three are required**; each must be ≥ 0. `(h1, h2, rg)` are treated
-  as independent (see [Method](./04_Method.html) for the caveat).
+  as **independent** — with only marginal SEs their estimation covariance is unknown, so it
+  is assumed zero (this can mis-estimate `VS_se` via the `−2 λ1 λ2 rg √(h1 h2)` cross term;
+  the `jackknife` route does not have this limitation).
 - **`--num-draws`** — Monte-Carlo draws for `mc` (default `100000`, must be ≥ 2); ignored
   by `delta`.
 - **`--seed`** — RNG seed for `mc` (default `1`), so runs are reproducible.
 
 `mc` and `delta` agree to well under 1% away from boundaries; near `VS ≈ 0` they diverge
-and `mc` is the one to trust. See [Method](./04_Method.html) for the full comparison.
+(there `delta` under-spreads or returns `NA`) and `mc` is the one to trust.
 
 ### Without standard errors (`none`)
 
@@ -173,7 +175,8 @@ rows are appended (`SE` is always `NA`), and the footer gains `Rsq1 Rsq2`:
 | `prs_eff` | PRS efficiency `V_PRS / VS_tgv ∈ [0, 1]` — fraction of the genetic separation the PRS captures |
 
 `prs_auc ≤ auc` always (a finite PRS cannot beat the genetic ceiling). No SE is propagated
-for the PRS-based quantities. See the [Method](./04_Method.html) page for the formula.
+for the PRS-based quantities. The computation is a port of
+`case_case_auc.compute_case_case_auc_prs`; at `Rsq1 = Rsq2 = 1` it recovers the ceiling `auc`.
 
 ## 5. Input rules and validation
 
