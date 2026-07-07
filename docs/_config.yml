@@ -7,6 +7,8 @@ description: "Genetic separation from GWAS summary statistics, with jackknife / 
 
 project:
   version: 1.0.0
+  download_url: https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep
+  download_text: "Download gensep"
 
 # License information
 license:

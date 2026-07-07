@@ -24,6 +24,20 @@ summary statistics) or Monte-Carlo / delta propagation (from point estimates).
 install — [Eigen](https://eigen.tuxfamily.org) is header-only and vendored — and it links
 statically.
 
+### Linux Executable
+
+A statically compiled executable for 64-bit Linux systems is available:
+[**gensep Linux Executable**](https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep).
+It has no runtime dependencies (`ldd` → "not a dynamic executable") and can be used
+directly on compatible systems:
+
+```bash
+chmod +x gensep
+./gensep --help
+```
+
+To build from source instead, follow the steps below.
+
 ### Prerequisites
 
 - **C++ compiler** with C++17 support. The system GCC is recommended, because it ships the
