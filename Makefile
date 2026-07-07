@@ -37,10 +37,17 @@ src/%.o: src/%.cpp
 test: $(BIN)
 	bash tests/run_tests.sh ./$(BIN)
 
+# Refresh the committed prebuilt binary (app/linux/gensep) after a source change,
+# gated on the regression suite passing. Then `git add app/linux/gensep && git commit`.
+release: test
+	mkdir -p app/linux
+	cp -f $(BIN) app/linux/$(BIN)
+	@echo "updated app/linux/$(BIN)  ->  commit it:  git add app/linux/$(BIN) && git commit"
+
 clean:
 	rm -f $(OBJ) $(DEP) $(BIN)
 
 # Pull in the auto-generated header dependencies (silent if not built yet).
 -include $(DEP)
 
-.PHONY: all clean test
+.PHONY: all clean test release
