@@ -7,9 +7,25 @@ order: 2
 
 `gensep` is a single self-contained C++17 command-line tool. There is no external library
 to install: [Eigen](https://eigen.tuxfamily.org) is header-only and vendored under
-`third_party/`, and the program links statically. Building is a plain `make`.
+`third_party/`, and the program links statically. Use the prebuilt binary, or build from
+source with a plain `make`.
 
-## 1. Prerequisites
+## 1. Prebuilt Linux executable
+
+A statically compiled executable for 64-bit Linux systems is available:
+[**gensep Linux Executable**](https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep).
+It has no runtime dependencies (`ldd ./gensep` → "not a dynamic executable"), so it can be
+used directly on compatible systems:
+
+```bash
+chmod +x gensep
+./gensep --help
+```
+
+This is the quickest option. To modify the code or rebuild for your environment, build from
+source instead (below).
+
+## 2. Prerequisites
 
 - A C++17 compiler that can produce a static binary. The Makefile pins the **system**
   GCC (`/usr/bin/g++`) because it ships static `libc` / `libm` / `libstdc++`; the conda
@@ -19,7 +35,7 @@ to install: [Eigen](https://eigen.tuxfamily.org) is header-only and vendored und
 
 No MKL, no BLAS, no Boost — the numerics use vendored header-only Eigen.
 
-## 2. Build from source
+## 3. Build from source
 
 ```bash
 cd code/gensep
@@ -62,7 +78,7 @@ make EIGEN=/path/to/eigen
 The Makefile deliberately uses `CXXFLAGS :=` (not `?=`) so that a `CXXFLAGS` exported by
 a conda `activate` script cannot silently drop `-Ithird_party/eigen`.
 
-## 3. Quick validation
+## 4. Quick validation
 
 Confirm the executable starts and prints its usage:
 
@@ -72,7 +88,7 @@ Confirm the executable starts and prints its usage:
 
 You should see the `--se-method <jackknife|mc|delta|none>` synopsis.
 
-## 4. Run the regression tests
+## 5. Run the regression tests
 
 A minimal, data-free regression suite is included. It exercises the three point-mode SE
 methods, point-value correctness, Monte-Carlo determinism, and every input-validation
@@ -84,7 +100,7 @@ make test
 
 All checks should report `PASS` and the run ends with `N passed, 0 failed`.
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 - **`-static` link errors** (e.g. "cannot find `-lc`"): your compiler lacks the static
   runtime libraries. Use the system GCC (`make CXX=/usr/bin/g++`, the default) rather than
