@@ -3,7 +3,7 @@ remote_theme: allejo/jekyll-docs-theme
 
 # Project information
 name: gensep
-description: "Genetic separation from GWAS summary statistics, with jackknife / Monte-Carlo / delta standard errors."
+description: "Quantifying the genetic separability of disease subtypes — oracle & finite-PRS case–case AUC from GWAS summaries or h2/rg estimates."
 
 project:
   version: 1.0.0

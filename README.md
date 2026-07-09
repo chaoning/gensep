@@ -111,9 +111,11 @@ See the full tutorial in our [documentation](https://chaoning.github.io/gensep).
 
 ## Citing the work
 
-`gensep` builds on the SumHer method (Speed & Balding, *Nature Genetics* 2019) implemented
-in [LDAK](https://dougspeed.com/ldak/), and on the liability / AUC theory of Wray et al. and
-Lee et al. A `gensep` manuscript is in preparation.
+> Chao Ning, Jasper Hof and Doug Speed. *Quantifying the Genetic Separability of Disease
+> Subtypes* (in preparation).
+
+The heritability and genetic-correlation solvers are a port of SumHer (Speed & Balding,
+*Nature Genetics* 2019), implemented in [LDAK](https://dougspeed.com/ldak/).
 
 ## License
 
