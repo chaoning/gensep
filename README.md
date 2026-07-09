@@ -1,22 +1,43 @@
-# gensep: **Genetic separation between disease subtypes from GWAS summary statistics**
+# gensep: **Quantifying the genetic separability of disease subtypes**
 
 ## Overview
 
-`gensep` quantifies the **genetic separation** between two disease subtypes (or two related
-traits) from GWAS summary statistics. Given a tagging file and the two traits' summaries —
-or simply their heritability / genetic-correlation point estimates — it reports, on one
-common SNP set:
+`gensep` implements a liability-threshold framework for **case–case subtype discrimination**
+— how well genetics can tell two disease subtypes apart. The central quantity is the
+**genetic separation variance**
 
-- per-subtype SNP heritability, observed and liability scale (`hsq1` / `hsq2`);
-- the genetic correlation `rg`;
-- the genetic-separation variance `VS` and the case–case heritability `h2cc = VS/(VS+4)`;
-- the upper-limit (ceiling) case–case `auc`, and — given per-subtype PRS AUCs — the
-  achievable **finite-PRS** case–case AUC.
+```
+V_S = λ1² h1² + λ2² h2² − 2 λ1 λ2 rg h1 h2,
+```
 
-Every quantity comes with a **standard error**. `gensep` is a self-contained C++ port of
-LDAK SumHer (`--sum-hers` / `--sum-cors`), extended with the joint uncertainty on the
-derived separation quantities that LDAK does not expose — via a fused block-jackknife (from
-summary statistics) or Monte-Carlo / delta propagation (from point estimates).
+built from the two subtypes' liability-scale SNP heritabilities (`h1²`, `h2²`), their
+genetic correlation (`rg`), and the prevalence-driven selection intensities (`λ_i`). `V_S`
+is large when the subtypes have strong subtype-specific genetic components and small when
+their genetic effects are largely shared. From `V_S`, `gensep` derives:
+
+- the **oracle case–case AUC** — the maximum achievable AUC for predicting subtype if the
+  true genetic values were known — and its leading-order approximation;
+- the balanced observed-scale **case–case heritability** `h²_cc = V_S / (V_S + 4)`, a
+  bounded, AUC-linked summary of genetic separation.
+
+`gensep` computes these three interchangeable ways, all writing the same output:
+
+1. **From GWAS summary statistics** — supply a tagging file and the two subtypes' summaries;
+   `gensep` estimates the subtype heritabilities and genetic correlation (SumHer) on one
+   common SNP set and derives everything with a fused block-jackknife standard error.
+2. **From point estimates** — if you already have the subtypes' observed-scale
+   heritabilities and genetic correlation with their SEs (from **LDAK / SumHer, LDSC, or any
+   other method**), `gensep` computes the separation quantities directly, propagating the SE
+   by Monte-Carlo or the delta method.
+3. **Plus finite-PRS AUC** — additionally supply each subtype's PRS case/control AUC and
+   `gensep` reports the AUC achievable with those finite-accuracy polygenic scores, together
+   with **PRS recovery** (`V_PRS / V_S`, the fraction of the oracle genetic separation the
+   PRS captures).
+
+Every quantity comes with a standard error. `gensep` is a self-contained C++ tool
+accompanying *Quantifying the Genetic Separability of Disease Subtypes* (Ning, Hof & Speed);
+the heritability and genetic-correlation solvers are a port of LDAK SumHer (`--sum-hers` /
+`--sum-cors`).
 
 ## Installation
 
