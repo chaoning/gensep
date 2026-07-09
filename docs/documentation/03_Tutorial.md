@@ -43,9 +43,7 @@ gensep --se-method jackknife \
 ### Inputs
 
 - **`--tagfile`** — an LDAK tagging file, produced by `ldak --calc-tagging` (see
-  [Calculate Taggings](https://dougspeed.com/calculate-taggings/)). gensep supports
-  **single-category** tagging only (e.g. `HumDef` / an `ldak-thin` model); a multi-category
-  file is rejected with an error.
+  [Calculate Taggings](https://dougspeed.com/calculate-taggings/)).
 - **`--summary` / `--summary2`** — the two traits' summary statistics, in LDAK
   `.summaries` format: a header line followed by rows of
 
