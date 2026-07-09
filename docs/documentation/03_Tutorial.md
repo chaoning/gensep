@@ -42,9 +42,10 @@ gensep --se-method jackknife \
 
 ### Inputs
 
-- **`--tagfile`** — an LDAK tagging file, produced by `ldak --calc-tagging`. gensep
-  supports **single-category** tagging only (e.g. `HumDef` / an `ldak-thin` model); a
-  multi-category file is rejected with an error.
+- **`--tagfile`** — an LDAK tagging file, produced by `ldak --calc-tagging` (see
+  [Calculate Taggings](https://dougspeed.com/calculate-taggings/)). gensep supports
+  **single-category** tagging only (e.g. `HumDef` / an `ldak-thin` model); a multi-category
+  file is rejected with an error.
 - **`--summary` / `--summary2`** — the two traits' summary statistics, in LDAK
   `.summaries` format: a header line followed by rows of
 
@@ -189,8 +190,9 @@ for the PRS-based quantities. The computation is a port of
 
 ## 6. Summary workflow
 
-1. **From GWAS**: build a tagging file with LDAK, prepare the two `.summaries` files, then
-   run `gensep --se-method jackknife …`.
+1. **From GWAS**: build a tagging file with LDAK
+   ([Calculate Taggings](https://dougspeed.com/calculate-taggings/)), prepare the two
+   `.summaries` files, then run `gensep --se-method jackknife …`.
 2. **From existing estimates**: run `gensep --se-method mc …` (or `delta`) with your h²/rg
    point estimates and their SEs, or `none` if you have no SEs.
 3. Read the derived separation quantities and their SEs from `PREFIX.gensep`.
