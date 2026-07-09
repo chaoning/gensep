@@ -48,3 +48,5 @@ SumHer (Speed & Balding, *Nature Genetics* 2019), implemented in
 ## Contact
 For questions, open an issue on [GitHub](https://github.com/chaoning/gensep/issues) or
 email me at ningchao91@gmail.com
+
+For other tools, see [chaoning.github.io/software.html](https://chaoning.github.io/software.html).

@@ -120,3 +120,7 @@ The heritability and genetic-correlation solvers are a port of SumHer (Speed & B
 ## License
 
 `gensep` is free software released under the [GNU General Public License v3.0 (GPL-3.0)](LICENSE).
+
+## More software
+
+For other tools, see [chaoning.github.io/software.html](https://chaoning.github.io/software.html).
