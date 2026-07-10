@@ -57,16 +57,17 @@ make CXX=/path/to/your/g++
 Note that the compiler you choose must be able to satisfy `-static -static-libstdc++
 -static-libgcc`; otherwise the final link step will fail.
 
-### Optional OpenMP
+### Threads (OpenMP)
 
-An OpenMP build parallelizes the block-jackknife loop across cores:
+OpenMP is **on by default**, and the binary stays fully static. It runs single-threaded
+unless you ask for more with `--max-threads N` at run time (which parallelizes the
+block-jackknife loop across `N` cores) — no separate build needed. Each leave-one-block
+heritability solve is warm-started from the full-data fit, so it is already fast
+single-threaded. To build with no OpenMP at all:
 
 ```bash
-make OMP=1
+make OMP=0
 ```
-
-The single-threaded binary is already fast (each leave-one-block heritability solve is
-warm-started from the full-data fit); OpenMP gives a further speedup on many-core machines.
 
 ### Eigen location
 

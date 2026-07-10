@@ -11,6 +11,9 @@
 #include <cstring>
 #include <string>
 #include <map>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "common.hpp"
 #include "tagging.hpp"
 #include "summary.hpp"
@@ -71,7 +74,7 @@ static void usage() {
         "  --se-method jackknife    — from summary statistics (SumHer + fused block-jackknife)\n"
         "    gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \\\n"
         "           --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \\\n"
-        "           [--num-blocks 200] [--quiet] --out PREFIX\n"
+        "           [--num-blocks 200] [--max-threads 1] [--quiet] --out PREFIX\n"
         "\n"
         "  --se-method mc|delta|none — from given point estimates (h2_obs, rg, K, P)\n"
         "    gensep --se-method mc --h1 <h2obs1> --h2 <h2obs2> --rg <rg> \\\n"
@@ -171,6 +174,15 @@ int main(int argc, char** argv) {
     if (a1 == "-h" || a1 == "--help") { usage(); return 0; }
 
     auto o = parse_opts(argc, argv);
+
+    // Thread count for the OpenMP block-jackknife (default 1 = single-threaded). No effect
+    // in a non-OpenMP build (make OMP=0) or for the point modes, which are not parallel.
+    long max_threads = opt_l(o, "max-threads", 1);
+    if (max_threads < 1) die("--max-threads must be >= 1");
+#ifdef _OPENMP
+    omp_set_num_threads((int)max_threads);
+#endif
+
     auto it = o.find("se-method");
     if (it == o.end()) die("missing required --se-method (jackknife|mc|delta|none)");
     const std::string& sm = it->second;

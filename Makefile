@@ -15,8 +15,11 @@ CXXFLAGS := -O3 -std=c++17 -Wall -Wextra -I$(EIGEN) -Isrc -MMD -MP
 # binary runs on any compatible Linux host; -s strips symbols to shrink it.
 LDFLAGS  := -static -static-libstdc++ -static-libgcc -s
 
-# Optional OpenMP: make OMP=1
-ifdef OMP
+# OpenMP is ON by default: the block-jackknife loop is parallel, and the thread count is
+# chosen at run time with --max-threads (default 1 = single-threaded). The static binary
+# stays fully static ("not a dynamic executable"). Disable entirely with `make OMP=0`.
+OMP ?= 1
+ifeq ($(OMP),1)
 CXXFLAGS += -fopenmp
 LDFLAGS  += -fopenmp
 endif

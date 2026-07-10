@@ -60,14 +60,17 @@ gensep --se-method jackknife \
   `(0, 1)`). These are not stored in the summaries, so you must supply them; they enter the
   Lee factor.
 - **`--num-blocks`** — number of jackknife blocks (default `200`, must be ≥ 2).
+- **`--max-threads`** — threads for the block-jackknife loop (default `1` = single-threaded).
+  e.g. `--max-threads 8` parallelizes the 200 block solves across 8 cores; results are
+  identical to single-threaded.
 - **`--quiet`** — suppress the progress / diagnostic messages printed to `stderr`
   (matched-SNP counts, overlap, and the block-jackknife progress bar). The result file and
   the stdout summary are unchanged.
 - **`--out`** — output prefix; results are written to `PREFIX.gensep`.
 
 The jackknife shows live progress on `stderr` (SNP overlap, then a `block N / B` counter);
-each leave-one-block heritability solve is warm-started from the full-data fit, so the run
-is fast. Building with OpenMP (`make OMP=1`) additionally parallelizes the block loop.
+each leave-one-block heritability solve is warm-started from the full-data fit, so even
+single-threaded it is fast, and `--max-threads` scales it across cores.
 
 ## 2. Run from point estimates (`mc` / `delta` / `none`)
 

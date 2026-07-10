@@ -101,7 +101,8 @@ stripped), so it runs on any compatible Linux host with no runtime dependencies.
 ### Notes
 
 - The Makefile pins `CXX := /usr/bin/g++` for static linking; override with `make CXX=...`.
-- Optional OpenMP build: `make OMP=1`.
+- OpenMP is on by default (still fully static); use `--max-threads N` at run time to
+  parallelize the block-jackknife, or `make OMP=0` to build without OpenMP.
 - Run the regression suite with `make test`.
 - Rebuild from scratch with `make clean && make`.
 
