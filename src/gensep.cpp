@@ -225,6 +225,11 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
         std::fprintf(stderr, "  %.1f s\n", secs(t_jk));
     }
 
+    // sum-cors diagnostics to the log only (NOT written to PREFIX.gensep): the per-trait
+    // LDSC-style intercepts (>1 = inflation) and the cross-trait sample-overlap term.
+    std::fprintf(stderr, "sum-cors diagnostics: intercept1=%.4f intercept2=%.4f overlap=%.4f\n",
+                 cors.intercept1, cors.intercept2, cors.overlap);
+
     SepResult r;
     fill_derived(r, h1obs * c1, h2obs * c2, cors.cor, h1l_b, h2l_b, cors.cor_b, lam1, lam2, d1, d2);
     r.hsq1_obs = h1obs; r.hsq1_obs_se = jackknife_se(h1_b);
