@@ -25,6 +25,8 @@ their genetic effects are largely shared. From `V_S`, `gensep` derives:
 1. **From GWAS summary statistics** — supply a tagging file and the two subtypes' summaries;
    `gensep` estimates the subtype heritabilities and genetic correlation (SumHer) on one
    common SNP set and derives everything with a fused block-jackknife standard error.
+   Ready-made per-ancestry HapMap tagging files are provided (see the
+   [documentation](https://chaoning.github.io/gensep/documentation/03_Tutorial.html#ready-made-tagging-files)).
 2. **From point estimates** — if you already have the subtypes' observed-scale
    heritabilities and genetic correlation with their SEs (from **LDAK / SumHer, LDSC, or any
    other method**), `gensep` computes the separation quantities directly, propagating the SE

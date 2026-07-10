@@ -42,8 +42,9 @@ gensep --se-method jackknife \
 
 ### Inputs
 
-- **`--tagfile`** — an LDAK tagging file, produced by `ldak --calc-tagging` (see
-  [Calculate Taggings](https://dougspeed.com/calculate-taggings/)).
+- **`--tagfile`** — an LDAK tagging file. Use a **ready-made** one (see
+  [Ready-made tagging files](#ready-made-tagging-files) below), or build your own with
+  `ldak --calc-tagging` ([Calculate Taggings](https://dougspeed.com/calculate-taggings/)).
 - **`--summary` / `--summary2`** — the two traits' summary statistics, in LDAK
   `.summaries` format: a header line followed by rows of
 
@@ -77,6 +78,34 @@ gensep --se-method jackknife \
   e.g. `--max-threads 8` parallelizes the 200 block solves across 8 cores; results are
   identical to single-threaded.
 - **`--out`** — output prefix; results are written to `PREFIX.gensep`.
+
+### Ready-made tagging files
+
+You do not need to build a tagging file yourself. We provide pre-computed **HapMap3
+non-ambiguous SNP** tagging files (single-category, `--power -1` "Human Default" model),
+one per ancestry — courtesy of Doug Speed. Pick the one matching your GWAS ancestry; the
+method is robust to SNP overlap, so an exact SNP match is not needed.
+
+| Ancestry | Download (gzip) | md5 (`.gz`) |
+| --- | --- | --- |
+| European / UK | [tag.HAPMAP.UK.tagging.gz](https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.UK.tagging.gz) | `88b22d43b17735114619a7dfbf2a7816` |
+| Finnish | [tag.HAPMAP.FIN.tagging.gz](https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.FIN.tagging.gz) | `86e8c9aac5d764911f07ac9d85036e70` |
+| East Asian | [tag.HAPMAP.EAS.tagging.gz](https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.EAS.tagging.gz) | `526f6fff81b1d779c62f976c08373cf8` |
+| African / Caribbean | [tag.HAPMAP.CARAFR.tagging.gz](https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.CARAFR.tagging.gz) | `bc2016c0e5c98a375280a0b3b04472df` |
+| Admixed American | [tag.HAPMAP.AMR.tagging.gz](https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.AMR.tagging.gz) | `c91abda8dacca7d81c1821efd54e2a83` |
+
+Each covers ~1.1M HapMap3 SNPs. Download, decompress, and pass it to `--tagfile`:
+
+```bash
+wget https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.UK.tagging.gz
+gunzip tag.HAPMAP.UK.tagging.gz          # -> tag.HAPMAP.UK.tagging (~56 MB)
+gensep --se-method jackknife --tagfile tag.HAPMAP.UK.tagging \
+       --summary trait1.summaries --summary2 trait2.summaries \
+       --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> --out output/pair
+```
+
+To build a tagging file for a different reference or SNP set instead, use LDAK
+`--calc-tagging` (see [Calculate Taggings](https://dougspeed.com/calculate-taggings/)).
 
 The jackknife shows live progress on `stderr`, with each stage reporting its elapsed time
 (reading + QC, heritability/rg estimation, then a `block N / B` counter for the jackknife):
