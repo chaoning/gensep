@@ -59,11 +59,14 @@ Note that the compiler you choose must be able to satisfy `-static -static-libst
 
 ### Optional OpenMP
 
-An OpenMP build is available if you want threaded numerics:
+An OpenMP build parallelizes the block-jackknife loop across cores:
 
 ```bash
 make OMP=1
 ```
+
+The single-threaded binary is already fast (each leave-one-block heritability solve is
+warm-started from the full-data fit); OpenMP gives a further speedup on many-core machines.
 
 ### Eigen location
 

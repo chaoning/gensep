@@ -8,7 +8,7 @@ namespace gs {
 double sumhers_h2_block(int L, const double* stg, const double* chi,
                         const double* nss, const double* sv, double ss00,
                         double scale, int skip_s, int skip_e,
-                        double tol, int maxiter) {
+                        double tol, int maxiter, double theta_init) {
     std::vector<double> sT(L);
     for (int j = 0; j < L; ++j) sT[j] = nss[j] / scale * sv[j];
     auto inblk = [&](int j) { return j >= skip_s && j < skip_e; };
@@ -25,7 +25,7 @@ double sumhers_h2_block(int L, const double* stg, const double* chi,
     auto make_exps = [&](double th, std::vector<double>& e) {
         for (int j = 0; j < L; ++j) { double v = 1 + sT[j] * th; e[j] = v <= 0 ? 1e-6 : v; }
     };
-    double theta = 0, like, likeold, diff = 0;
+    double theta = theta_init, like, likeold, diff = 0;   // warm start (0 = cold)
     std::vector<double> exps(L), exps2(L);
     make_exps(theta, exps); like = loglik(exps);
     int count = 0, rflag = 0;
@@ -38,8 +38,9 @@ double sumhers_h2_block(int L, const double* stg, const double* chi,
         for (int j = 0; j < L; ++j) {
             if (inblk(j)) continue;
             double e = exps[j];
-            AI += (chi[j] - 0.5 * e) / stg[j] * std::pow(e, -3) * sT[j] * sT[j];
-            BI += 0.5 * (chi[j] - e) / stg[j] * std::pow(e, -2) * sT[j];
+            double ie2 = 1.0 / (e * e), ie3 = ie2 / e;   // e^-2, e^-3 (cheaper than std::pow)
+            AI += (chi[j] - 0.5 * e) / stg[j] * ie3 * sT[j] * sT[j];
+            BI += 0.5 * (chi[j] - e) / stg[j] * ie2 * sT[j];
         }
         double td = BI / AI, relax = 1; bool moved = false;
         while (relax > 0.001) {

@@ -4,14 +4,16 @@
 
 namespace gs {
 
-PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2) {
+PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2,
+                 bool verbose) {
     const int P = T.num_parts;
     std::vector<int> keep;
     keep.reserve(T.n);
     for (int j = 0; j < T.n; ++j) if (S1.snss[j] > 0 && S2.snss[j] > 0) keep.push_back(j);
     if (keep.empty()) die("no predictors with summary statistics for both traits");
-    std::fprintf(stderr, "Overlap: %d predictors with summary statistics for both traits\n",
-                 (int)keep.size());
+    if (verbose)
+        std::fprintf(stderr, "Overlap: %d predictors with summary statistics for both traits\n",
+                     (int)keep.size());
 
     PairData D;
     D.n = (int)keep.size();

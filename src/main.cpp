@@ -19,10 +19,17 @@
 
 using namespace gs;
 
+// Valueless flag options (present/absent, no following value).
+static bool is_flag_opt(const char* k) {
+    return std::strcmp(k, "quiet") == 0;
+}
 static std::map<std::string, std::string> parse_opts(int argc, char** argv) {
     std::map<std::string, std::string> o;
     for (int i = 1; i < argc; ++i) {
-        if (std::strncmp(argv[i], "--", 2) == 0 && i + 1 < argc) { o[argv[i] + 2] = argv[i + 1]; ++i; }
+        if (std::strncmp(argv[i], "--", 2) != 0) continue;
+        const char* k = argv[i] + 2;
+        if (is_flag_opt(k)) { o[k] = "1"; continue; }          // flag: no value follows
+        if (i + 1 < argc) { o[k] = argv[i + 1]; ++i; }
     }
     return o;
 }
@@ -64,7 +71,7 @@ static void usage() {
         "  --se-method jackknife    — from summary statistics (SumHer + fused block-jackknife)\n"
         "    gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \\\n"
         "           --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \\\n"
-        "           [--num-blocks 200] --out PREFIX\n"
+        "           [--num-blocks 200] [--quiet] --out PREFIX\n"
         "\n"
         "  --se-method mc|delta|none — from given point estimates (h2_obs, rg, K, P)\n"
         "    gensep --se-method mc --h1 <h2obs1> --h2 <h2obs2> --rg <rg> \\\n"
@@ -95,13 +102,14 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
     long B = opt_l(o, "num-blocks", 200);
     if (B < 2) die("--num-blocks must be >= 2");
     double auc1 = 0, auc2 = 0; bool have_auc = parse_auc(o, auc1, auc2);
+    bool verbose = !o.count("quiet");
 
     Tagging T = read_tagfile(tagfile);
-    SummaryAligned S1 = read_sumsfile(sum1, T, /*amb=*/0);
-    SummaryAligned S2 = read_sumsfile(sum2, T, /*amb=*/0);
-    PairData D = qc_pair(T, S1, S2);
+    SummaryAligned S1 = read_sumsfile(sum1, T, /*amb=*/0, 1.0, verbose);
+    SummaryAligned S2 = read_sumsfile(sum2, T, /*amb=*/0, 1.0, verbose);
+    PairData D = qc_pair(T, S1, S2, verbose);
 
-    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2);
+    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2, verbose);
     write_gensep(out, r);
 
     std::printf("hsq1 obs %.4f(%.4f) liab %.4f(%.4f)  hsq2 obs %.4f(%.4f) liab %.4f(%.4f)  "
