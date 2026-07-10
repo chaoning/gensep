@@ -82,9 +82,10 @@ gensep --se-method jackknife \
 ### Ready-made tagging files
 
 You do not need to build a tagging file yourself. We provide pre-computed **HapMap3
-non-ambiguous SNP** tagging files (single-category, `--power -1` "Human Default" model),
-one per ancestry — courtesy of Doug Speed. Pick the one matching your GWAS ancestry; the
-method is robust to SNP overlap, so an exact SNP match is not needed.
+non-ambiguous SNP** tagging files, one per ancestry — courtesy of Doug Speed. They are
+single-category, built with the **LDAK heritability model** (`ldak --calc-tagging --power
+-0.25`) on an ancestry-matched HapMap3 reference panel. Pick the one matching your GWAS
+ancestry; the method is robust to SNP overlap, so an exact SNP match is not needed.
 
 | Ancestry | Download (gzip) | md5 (`.gz`) |
 | --- | --- | --- |
