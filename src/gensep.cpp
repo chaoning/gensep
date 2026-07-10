@@ -7,6 +7,9 @@
 #include <random>
 #include <atomic>
 #include <chrono>
+#include <algorithm>
+#include <numeric>
+#include <vector>
 
 namespace gs {
 
@@ -20,6 +23,34 @@ static inline double clip_rg(double rg) {
     if (rg < -0.999) return -0.999;
     if (rg >  0.999) return  0.999;
     return rg;
+}
+
+// Per-trait summary-statistics diagnostic to the log (as LDAK's get_sum_stats): the
+// tagging-weighted genomic inflation factor (GIF > 1 flags inflation from stratification /
+// cryptic relatedness / strong polygenicity), the largest single-SNP variance explained
+// (rho^2 = chi/(chi+n); informs --cutoff), and the tagging-weighted mean sample size.
+static void report_trait_stats(const char* label, int L, const double* chi,
+                               const double* nss, const double* srho, const double* stg) {
+    double sumw = 0, sumN = 0, maxr2 = 0;
+    for (int j = 0; j < L; ++j) {
+        double w = 1.0 / stg[j];
+        sumw += w;
+        sumN += nss[j] * w;
+        double r2 = srho[j] * srho[j];
+        if (r2 > maxr2) maxr2 = r2;
+    }
+    // weighted median chi^2: sort by chi, accumulate weight until it passes half
+    std::vector<int> idx(L);
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(), [&](int a, int b) { return chi[a] < chi[b]; });
+    double acc = 0, wmedian = 0;
+    for (int j = 0; j < L; ++j) {
+        acc += 1.0 / stg[idx[j]];
+        if (acc > sumw / 2) { wmedian = chi[idx[j]]; break; }
+    }
+    double gif = wmedian / 0.4549364;                 // chi^2_1 median = 0.4549364
+    std::fprintf(stderr, "%s: %d SNPs, weighted GIF %.3f, max variance explained %.4f, "
+                 "weighted mean N %.0f\n", label, L, gif, maxr2, sumN / sumw);
 }
 
 // The four derived quantities from liability h1,h2 + rg (case_case_auc.py).
@@ -175,6 +206,10 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
     double s1 = 0, s2 = 0, s3 = 0;
     for (int j = 0; j < L; ++j) { s1 += D.snss[j]/stg[j]; s2 += D.snss2[j]/stg[j]; s3 += 1.0/stg[j]; }
     double scale1 = s1 / s3, scale2 = s2 / s3;
+
+    // per-trait summary-stat diagnostics (log only)
+    report_trait_stats("Trait 1", L, D.schis.data(),  D.snss.data(),  D.srhos.data(),  stg);
+    report_trait_stats("Trait 2", L, D.schis2.data(), D.snss2.data(), D.srhos2.data(), stg);
 
     using clk = std::chrono::steady_clock;
     auto secs = [](clk::time_point a) { return std::chrono::duration<double>(clk::now() - a).count(); };

@@ -83,15 +83,24 @@ The jackknife shows live progress on `stderr`, with each stage reporting its ela
 
 ```
 Read tagging + summaries and QC: 1.8 s
+Trait 1: 527122 SNPs, weighted GIF 1.009, max variance explained 0.0016, weighted mean N 325246
+Trait 2: 527122 SNPs, weighted GIF 1.136, max variance explained 0.0021, weighted mean N 348968
 Estimating heritabilities and genetic correlation (sum-cors)... 0.7 s
 Running 200-block jackknife...
   block 200 / 200  8.1 s
 sum-cors diagnostics: intercept1=0.9357 intercept2=0.9003 overlap=0.0062
 ```
 
-The last line is a **diagnostic** printed to `stderr` only (never written to `PREFIX.gensep`):
-the per-trait LDSC-style intercepts (`> 1` indicates inflation from stratification / cryptic
-relatedness) and the cross-trait sample-overlap term. They match LDAK `--sum-cors`.
+The `Trait 1/2` and `sum-cors diagnostics` lines are printed to `stderr` only (never written
+to `PREFIX.gensep`), matching LDAK's SumHer diagnostics:
+
+- **weighted GIF** — tagging-weighted genomic inflation factor (`> 1` flags inflation from
+  stratification / cryptic relatedness / strong polygenicity → consider `--intercept YES` or
+  genomic-control-corrected summaries).
+- **max variance explained** — the largest single-SNP `rho² = chi/(chi+n)`; informs `--cutoff`.
+- **weighted mean N** — effective sample size.
+- **intercept1/2, overlap** — the per-trait LDSC-style intercepts and cross-trait
+  sample-overlap term from sum-cors.
 
 Each leave-one-block heritability solve is warm-started from the full-data fit, so even
 single-threaded it is fast, and `--max-threads` scales the block loop across cores.
