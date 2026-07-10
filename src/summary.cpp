@@ -15,7 +15,7 @@ static int find_head(const std::vector<char*>& hdr, const char* name) {
 }
 
 SummaryAligned read_sumsfile(const std::string& path, const Tagging& T,
-                             int amb, double scaling, bool verbose) {
+                             int amb, double scaling) {
     std::FILE* f = std::fopen(path.c_str(), "r");
     if (!f) die("cannot open summary file " + path);
 
@@ -102,10 +102,9 @@ SummaryAligned read_sumsfile(const std::string& path, const Tagging& T,
     std::fclose(f);
 
     if (S.n_matched == 0) die("summary file " + path + " matches none of the tagging predictors");
-    if (verbose)
-        std::fprintf(stderr, "[%s] matched %d / %d tagging predictors "
-                     "(inconsistent=%d ambiguous=%d long=%d)\n",
-                     path.c_str(), S.n_matched, T.n, ccount, acount, lcount);
+    std::fprintf(stderr, "[%s] matched %d / %d tagging predictors "
+                 "(inconsistent=%d ambiguous=%d long=%d)\n",
+                 path.c_str(), S.n_matched, T.n, ccount, acount, lcount);
     return S;
 }
 

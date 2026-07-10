@@ -18,6 +18,6 @@ struct SummaryAligned {
 
 // amb=0 drops strand-ambiguous (A/T, C/G) SNPs (LDAK default); scaling default 1.
 SummaryAligned read_sumsfile(const std::string& path, const Tagging& T,
-                             int amb = 0, double scaling = 1.0, bool verbose = true);
+                             int amb = 0, double scaling = 1.0);
 
 }  // namespace gs

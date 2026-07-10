@@ -23,7 +23,6 @@ struct PairData {
 };
 
 // Paired QC (for `cors`): keep SNPs with snss>0 AND snss2>0 (sumsb.c:135).
-PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2,
-                 bool verbose = true);
+PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2);
 
 }  // namespace gs

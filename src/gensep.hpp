@@ -53,8 +53,7 @@ struct SepResult {
 // from the point estimates (no SE), identically across every SE method.
 SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, double P2,
                          int num_blocks = 200,
-                         bool have_auc = false, double auc1 = 0, double auc2 = 0,
-                         bool verbose = true);
+                         bool have_auc = false, double auc1 = 0, double auc2 = 0);
 
 // SE method for the nonlinear derived quantities (VS/h2cc/auc/auc_lo) in point mode.
 //   SE_MC    — Monte-Carlo: draw (h1,h2,rg) ~ independent Normal(point,se), push each
