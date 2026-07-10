@@ -68,7 +68,7 @@ static void usage() {
         "  --se-method jackknife    — from summary statistics (SumHer + fused block-jackknife)\n"
         "    gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \\\n"
         "           --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \\\n"
-        "           [--num-blocks 200] [--max-threads 1] --out PREFIX\n"
+        "           [--num-blocks 200] [--max-threads 1] [--cutoff 0.01] --out PREFIX\n"
         "\n"
         "  --se-method mc|delta|none — from given point estimates (h2_obs, rg, K, P)\n"
         "    gensep --se-method mc --h1 <h2obs1> --h2 <h2obs2> --rg <rg> \\\n"
@@ -99,12 +99,17 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
     long B = opt_l(o, "num-blocks", 200);
     if (B < 2) die("--num-blocks must be >= 2");
     double auc1 = 0, auc2 = 0; bool have_auc = parse_auc(o, auc1, auc2);
+    double cutoff = 0.0;
+    if (o.count("cutoff")) {
+        cutoff = opt_d(o, "cutoff");
+        if (!(cutoff > 0 && cutoff < 0.5)) die("--cutoff must be in (0, 0.5)");
+    }
 
     auto t_read = std::chrono::steady_clock::now();
     Tagging T = read_tagfile(tagfile);
     SummaryAligned S1 = read_sumsfile(sum1, T, /*amb=*/0);
     SummaryAligned S2 = read_sumsfile(sum2, T, /*amb=*/0);
-    PairData D = qc_pair(T, S1, S2);
+    PairData D = qc_pair(T, S1, S2, cutoff);
     std::fprintf(stderr, "Read tagging + summaries and QC: %.1f s\n",
                  std::chrono::duration<double>(std::chrono::steady_clock::now() - t_read).count());
 

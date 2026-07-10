@@ -60,6 +60,12 @@ gensep --se-method jackknife \
   `(0, 1)`). These are not stored in the summaries, so you must supply them; they enter the
   Lee factor.
 - **`--num-blocks`** — number of jackknife blocks (default `200`, must be ≥ 2).
+- **`--cutoff`** — exclude strong-effect loci: drop any SNP explaining ≥ `cutoff` of
+  phenotypic variance (`rho² = chi/(chi+n)`) in **either** trait, since such loci can bias
+  SumHer h²/rg (as LDAK `--sum-cors --cutoff`). Off by default; must be in `(0, 0.5)`,
+  e.g. `--cutoff 0.01`. If not set and some SNP exceeds 1%, gensep prints a reminder. Note
+  that with well-powered GWAS (large `n`) per-SNP variance explained is small, so `0.01`
+  often excludes nothing.
 - **`--max-threads`** — threads for the block-jackknife loop (default `1` = single-threaded).
   e.g. `--max-threads 8` parallelizes the 200 block solves across 8 cores; results are
   identical to single-threaded.

@@ -23,6 +23,9 @@ struct PairData {
 };
 
 // Paired QC (for `cors`): keep SNPs with snss>0 AND snss2>0 (sumsb.c:135).
-PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2);
+// cutoff > 0 drops predictors explaining >= cutoff of phenotypic variance in either trait
+// (strong-effect loci that can bias SumHer h2/rg). cutoff <= 0 disables it (default).
+PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2,
+                 double cutoff = 0.0);
 
 }  // namespace gs

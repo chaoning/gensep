@@ -4,14 +4,34 @@
 
 namespace gs {
 
-PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2) {
+PairData qc_pair(const Tagging& T, const SummaryAligned& S1, const SummaryAligned& S2,
+                 double cutoff) {
     const int P = T.num_parts;
     std::vector<int> keep;
     keep.reserve(T.n);
-    for (int j = 0; j < T.n; ++j) if (S1.snss[j] > 0 && S2.snss[j] > 0) keep.push_back(j);
+    int overlap = 0, excl = 0;
+    double maxr2 = 0;                              // max variance explained (either trait)
+    for (int j = 0; j < T.n; ++j) {
+        if (!(S1.snss[j] > 0 && S2.snss[j] > 0)) continue;      // both traits present
+        ++overlap;
+        double r1 = S1.srhos[j] * S1.srhos[j], r2 = S2.srhos[j] * S2.srhos[j];
+        if (r1 > maxr2) maxr2 = r1;
+        if (r2 > maxr2) maxr2 = r2;
+        // --cutoff: drop strong-effect loci (rho^2 = variance explained >= cutoff in either
+        // trait). Equivalent to LDAK sum-cors (per-trait n=0 then intersection).
+        if (cutoff > 0 && (r1 >= cutoff || r2 >= cutoff)) { ++excl; continue; }
+        keep.push_back(j);
+    }
     if (keep.empty()) die("no predictors with summary statistics for both traits");
-    std::fprintf(stderr, "Overlap: %d predictors with summary statistics for both traits\n",
-                 (int)keep.size());
+    std::fprintf(stderr, "Overlap: %d predictors with summary statistics for both traits\n", overlap);
+    if (cutoff > 0)
+        std::fprintf(stderr, "--cutoff %.4g: excluded %d strong-effect predictor(s) "
+                     "(variance explained >= %.4g in either trait); %d remain\n",
+                     cutoff, excl, cutoff, (int)keep.size());
+    else if (maxr2 > 0.01)
+        std::fprintf(stderr, "Warning: a predictor explains up to %.4f of phenotypic variance; "
+                     "strong-effect loci can bias SumHer h2/rg -- consider --cutoff (e.g. --cutoff 0.01)\n",
+                     maxr2);
 
     PairData D;
     D.n = (int)keep.size();

@@ -61,9 +61,11 @@ expect_err "--auc too low"           $BIN --se-method none $PT --auc1 0.4 --auc2
 # reject auc >= 0.9999 (auc_to_corr_liab domain) rather than silently emitting NA
 expect_err "--auc >= 0.9999"         $BIN --se-method none $PT --auc1 0.99995 --auc2 0.65 --out "$TMP/x"
 
-echo "jackknife K/P check fires before file I/O (consistency with point mode):"
+echo "jackknife arg checks fire before file I/O (consistency with point mode):"
 expect_err "jackknife bad P" $BIN --se-method jackknife --tagfile /no/such --summary a --summary2 b \
                                   --K1 0.01 --K2 0.02 --P1 2.0 --P2 0.5 --out "$TMP/x"
+expect_err "jackknife --cutoff out of range" $BIN --se-method jackknife --tagfile /no/such --summary a --summary2 b \
+                                  --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 --cutoff 0.6 --out "$TMP/x"
 
 echo "bad tagfile rejected (strict numeric Tagging column):"
 # structurally valid single-category tagfile, but Tagging value is non-numeric
