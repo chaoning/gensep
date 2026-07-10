@@ -66,6 +66,13 @@ gensep --se-method jackknife \
   e.g. `--cutoff 0.01`. If not set and some SNP exceeds 1%, gensep prints a reminder. Note
   that with well-powered GWAS (large `n`) per-SNP variance explained is small, so `0.01`
   often excludes nothing.
+- **`--intercept`** — `YES` or `NO` (default `NO`). `NO`: each SNP heritability is fit with
+  a **fixed intercept of 1** (standard SumHer, assumes no confounding inflation). `YES`: fit
+  a **free (LDSC-style) intercept** to absorb inflation from stratification / cryptic
+  relatedness — the heritabilities then come from the sum-cors per-trait fit, so `h1`, `h2`
+  and `rg` share one model, scale and block set. Use `YES` if your summaries may be inflated
+  and not genomic-control corrected. (The genetic correlation always uses a free intercept
+  and a sample-overlap term regardless of this flag.)
 - **`--max-threads`** — threads for the block-jackknife loop (default `1` = single-threaded).
   e.g. `--max-threads 8` parallelizes the 200 block solves across 8 cores; results are
   identical to single-threaded.

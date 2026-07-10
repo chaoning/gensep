@@ -68,7 +68,7 @@ static void usage() {
         "  --se-method jackknife    — from summary statistics (SumHer + fused block-jackknife)\n"
         "    gensep --se-method jackknife --tagfile T --summary S1 --summary2 S2 \\\n"
         "           --K1 <prev1> --K2 <prev2> --P1 <casefrac1> --P2 <casefrac2> \\\n"
-        "           [--num-blocks 200] [--max-threads 1] [--cutoff 0.01] --out PREFIX\n"
+        "           [--num-blocks 200] [--max-threads 1] [--cutoff 0.01] [--intercept NO] --out PREFIX\n"
         "\n"
         "  --se-method mc|delta|none — from given point estimates (h2_obs, rg, K, P)\n"
         "    gensep --se-method mc --h1 <h2obs1> --h2 <h2obs2> --rg <rg> \\\n"
@@ -104,6 +104,13 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
         cutoff = opt_d(o, "cutoff");
         if (!(cutoff > 0 && cutoff < 0.5)) die("--cutoff must be in (0, 0.5)");
     }
+    bool intercept = false;
+    if (o.count("intercept")) {
+        const std::string& v = o["intercept"];
+        if (v == "YES") intercept = true;
+        else if (v == "NO") intercept = false;
+        else die("--intercept must be YES or NO");
+    }
 
     auto t_read = std::chrono::steady_clock::now();
     Tagging T = read_tagfile(tagfile);
@@ -113,7 +120,7 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
     std::fprintf(stderr, "Read tagging + summaries and QC: %.1f s\n",
                  std::chrono::duration<double>(std::chrono::steady_clock::now() - t_read).count());
 
-    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2);
+    SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2, intercept);
     write_gensep(out, r);
 
     std::printf("hsq1 obs %.4f(%.4f) liab %.4f(%.4f)  hsq2 obs %.4f(%.4f) liab %.4f(%.4f)  "

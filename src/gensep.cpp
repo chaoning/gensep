@@ -158,7 +158,8 @@ static void fill_derived(SepResult& r,
 }
 
 SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, double P2,
-                         int num_blocks, bool have_auc, double auc1, double auc2) {
+                         int num_blocks, bool have_auc, double auc1, double auc2,
+                         bool intercept) {
     const int L = D.n;
     int B = num_blocks; if (B > L) B = L;
     double t1 = normal_inv(1 - K1), t2 = normal_inv(1 - K2);
@@ -178,38 +179,51 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
     using clk = std::chrono::steady_clock;
     auto secs = [](clk::time_point a) { return std::chrono::duration<double>(clk::now() - a).count(); };
 
-    // point h1/h2 (sum-hers solver on full common set) and rg (sum-cors)
-    std::fprintf(stderr, "Estimating heritabilities (SumHer) and genetic correlation (sum-cors)...");
+    // rg (sum-cors), which also yields per-trait heritabilities fit WITH a free intercept
+    // (cept=1) plus their block-jackknife — used directly when --intercept YES.
+    std::fprintf(stderr, "Estimating heritabilities and genetic correlation (sum-cors)...");
     std::fflush(stderr);
     auto t_pt = clk::now();
-    double h1obs = sumhers_h2_block(L, stg, D.schis.data(),  D.snss.data(),  sv, ss00, scale1, 0, 0);
-    double h2obs = sumhers_h2_block(L, stg, D.schis2.data(), D.snss2.data(), sv, ss00, scale2, 0, 0);
-    CorsResult cors = sum_cors(D, B);     // gives rg point + per-block cor_b (same L,B -> aligned)
-    std::fprintf(stderr, " %.1f s\n", secs(t_pt));
-
-    // Full-set thetas: warm-start seeds for the leave-one-block solves (h2 = theta*ss00/scale).
-    double th1 = h1obs * scale1 / ss00, th2 = h2obs * scale2 / ss00;
-
-    // per-block h1/h2 (sum-hers, leave-one-block-out) on the SAME blocks as cors, each
-    // warm-started from the full-set theta (converges in ~1-2 Newton iterations; same optimum).
+    CorsResult cors = sum_cors(D, B);
     std::vector<double> h1_b(B), h2_b(B), h1l_b(B), h2l_b(B);
-    std::fprintf(stderr, "Running %d-block jackknife...\n", B);
-    auto t_jk = clk::now();
-    std::atomic<int> done{0};
-    const int step = B / 20 > 0 ? B / 20 : 1;                 // progress every ~5%
+    double h1obs, h2obs;
+
+    if (intercept) {
+        // --intercept YES: heritabilities from the sum-cors per-trait fit (free intercept),
+        // already jackknifed on the same B blocks -> h1/h2/rg fully consistent (same
+        // solver / scale / blocks), and no extra SumHer solves needed.
+        h1obs = cors.her1; h2obs = cors.her2;
+        for (int p = 0; p < B; ++p) {
+            h1_b[p] = cors.her1_b[p]; h2_b[p] = cors.her2_b[p];
+            h1l_b[p] = h1_b[p] * c1;  h2l_b[p] = h2_b[p] * c2;
+        }
+        std::fprintf(stderr, " %.1f s\n", secs(t_pt));
+    } else {
+        // --intercept NO (default): standalone SumHer h2 with a fixed intercept of 1.
+        h1obs = sumhers_h2_block(L, stg, D.schis.data(),  D.snss.data(),  sv, ss00, scale1, 0, 0);
+        h2obs = sumhers_h2_block(L, stg, D.schis2.data(), D.snss2.data(), sv, ss00, scale2, 0, 0);
+        std::fprintf(stderr, " %.1f s\n", secs(t_pt));
+
+        // warm-start seeds for the leave-one-block solves (h2 = theta*ss00/scale)
+        double th1 = h1obs * scale1 / ss00, th2 = h2obs * scale2 / ss00;
+        std::fprintf(stderr, "Running %d-block jackknife...\n", B);
+        auto t_jk = clk::now();
+        std::atomic<int> done{0};
+        const int step = B / 20 > 0 ? B / 20 : 1;             // progress every ~5%
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int p = 0; p < B; ++p) {
-        int s = (int)((double)p * L / B), e = (int)((double)(p + 1) * L / B);
-        h1_b[p] = sumhers_h2_block(L, stg, D.schis.data(),  D.snss.data(),  sv, ss00, scale1, s, e, 0.001, 100, th1);
-        h2_b[p] = sumhers_h2_block(L, stg, D.schis2.data(), D.snss2.data(), sv, ss00, scale2, s, e, 0.001, 100, th2);
-        h1l_b[p] = h1_b[p] * c1;
-        h2l_b[p] = h2_b[p] * c2;
-        int n = ++done;
-        if (n % step == 0 || n == B) std::fprintf(stderr, "\r  block %d / %d", n, B);
+        for (int p = 0; p < B; ++p) {
+            int s = (int)((double)p * L / B), e = (int)((double)(p + 1) * L / B);
+            h1_b[p] = sumhers_h2_block(L, stg, D.schis.data(),  D.snss.data(),  sv, ss00, scale1, s, e, 0.001, 100, th1);
+            h2_b[p] = sumhers_h2_block(L, stg, D.schis2.data(), D.snss2.data(), sv, ss00, scale2, s, e, 0.001, 100, th2);
+            h1l_b[p] = h1_b[p] * c1;
+            h2l_b[p] = h2_b[p] * c2;
+            int n = ++done;
+            if (n % step == 0 || n == B) std::fprintf(stderr, "\r  block %d / %d", n, B);
+        }
+        std::fprintf(stderr, "  %.1f s\n", secs(t_jk));
     }
-    std::fprintf(stderr, "  %.1f s\n", secs(t_jk));
 
     SepResult r;
     fill_derived(r, h1obs * c1, h2obs * c2, cors.cor, h1l_b, h2l_b, cors.cor_b, lam1, lam2, d1, d2);

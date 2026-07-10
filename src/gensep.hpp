@@ -51,9 +51,13 @@ struct SepResult {
 // have_auc/auc1/auc2: optional per-subtype PRS case/control AUC. When have_auc, the
 // finite-PRS case-case AUC (prs_auc/prs_auc_lo/h2cc_prs/prs_eff) is additionally filled
 // from the point estimates (no SE), identically across every SE method.
+// intercept=false (default): standalone SumHer h2 with a fixed intercept of 1.
+// intercept=true (--intercept YES): h2 estimated with a free (LDSC-style) intercept, taken
+// from the sum-cors per-trait fit so h1/h2/rg share one model, scale and block set.
 SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, double P2,
                          int num_blocks = 200,
-                         bool have_auc = false, double auc1 = 0, double auc2 = 0);
+                         bool have_auc = false, double auc1 = 0, double auc2 = 0,
+                         bool intercept = false);
 
 // SE method for the nonlinear derived quantities (VS/h2cc/auc/auc_lo) in point mode.
 //   SE_MC    — Monte-Carlo: draw (h1,h2,rg) ~ independent Normal(point,se), push each
