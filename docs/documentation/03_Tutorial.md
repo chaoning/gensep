@@ -65,11 +65,20 @@ gensep --se-method jackknife \
   identical to single-threaded.
 - **`--out`** — output prefix; results are written to `PREFIX.gensep`.
 
-The jackknife shows live progress on `stderr` (SNP overlap, then a `block N / B` counter);
-each leave-one-block heritability solve is warm-started from the full-data fit, so even
-single-threaded it is fast, and `--max-threads` scales it across cores. Progress goes to
-`stderr` only (the `PREFIX.gensep` result and the stdout summary are unaffected); redirect
-it with `2>/dev/null` if you want silence.
+The jackknife shows live progress on `stderr`, with each stage reporting its elapsed time
+(reading + QC, heritability/rg estimation, then a `block N / B` counter for the jackknife):
+
+```
+Read tagging + summaries and QC: 1.8 s
+Estimating heritabilities (SumHer) and genetic correlation (sum-cors)... 0.7 s
+Running 200-block jackknife...
+  block 200 / 200  8.1 s
+```
+
+Each leave-one-block heritability solve is warm-started from the full-data fit, so even
+single-threaded it is fast, and `--max-threads` scales the block loop across cores.
+Progress goes to `stderr` only (the `PREFIX.gensep` result and the stdout summary are
+unaffected); redirect it with `2>/dev/null` if you want silence.
 
 ## 2. Run from point estimates (`mc` / `delta` / `none`)
 

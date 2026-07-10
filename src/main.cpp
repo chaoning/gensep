@@ -11,6 +11,7 @@
 #include <cstring>
 #include <string>
 #include <map>
+#include <chrono>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -99,10 +100,13 @@ static int run_jackknife(std::map<std::string, std::string>& o) {
     if (B < 2) die("--num-blocks must be >= 2");
     double auc1 = 0, auc2 = 0; bool have_auc = parse_auc(o, auc1, auc2);
 
+    auto t_read = std::chrono::steady_clock::now();
     Tagging T = read_tagfile(tagfile);
     SummaryAligned S1 = read_sumsfile(sum1, T, /*amb=*/0);
     SummaryAligned S2 = read_sumsfile(sum2, T, /*amb=*/0);
     PairData D = qc_pair(T, S1, S2);
+    std::fprintf(stderr, "Read tagging + summaries and QC: %.1f s\n",
+                 std::chrono::duration<double>(std::chrono::steady_clock::now() - t_read).count());
 
     SepResult r = gene_sep_fused(D, K1, K2, P1, P2, (int)B, have_auc, auc1, auc2);
     write_gensep(out, r);

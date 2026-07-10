@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <random>
 #include <atomic>
+#include <chrono>
 
 namespace gs {
 
@@ -174,11 +175,17 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
     for (int j = 0; j < L; ++j) { s1 += D.snss[j]/stg[j]; s2 += D.snss2[j]/stg[j]; s3 += 1.0/stg[j]; }
     double scale1 = s1 / s3, scale2 = s2 / s3;
 
+    using clk = std::chrono::steady_clock;
+    auto secs = [](clk::time_point a) { return std::chrono::duration<double>(clk::now() - a).count(); };
+
     // point h1/h2 (sum-hers solver on full common set) and rg (sum-cors)
-    std::fprintf(stderr, "Estimating heritabilities (SumHer) and genetic correlation (sum-cors)...\n");
+    std::fprintf(stderr, "Estimating heritabilities (SumHer) and genetic correlation (sum-cors)...");
+    std::fflush(stderr);
+    auto t_pt = clk::now();
     double h1obs = sumhers_h2_block(L, stg, D.schis.data(),  D.snss.data(),  sv, ss00, scale1, 0, 0);
     double h2obs = sumhers_h2_block(L, stg, D.schis2.data(), D.snss2.data(), sv, ss00, scale2, 0, 0);
     CorsResult cors = sum_cors(D, B);     // gives rg point + per-block cor_b (same L,B -> aligned)
+    std::fprintf(stderr, " %.1f s\n", secs(t_pt));
 
     // Full-set thetas: warm-start seeds for the leave-one-block solves (h2 = theta*ss00/scale).
     double th1 = h1obs * scale1 / ss00, th2 = h2obs * scale2 / ss00;
@@ -187,6 +194,7 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
     // warm-started from the full-set theta (converges in ~1-2 Newton iterations; same optimum).
     std::vector<double> h1_b(B), h2_b(B), h1l_b(B), h2l_b(B);
     std::fprintf(stderr, "Running %d-block jackknife...\n", B);
+    auto t_jk = clk::now();
     std::atomic<int> done{0};
     const int step = B / 20 > 0 ? B / 20 : 1;                 // progress every ~5%
 #ifdef _OPENMP
@@ -201,7 +209,7 @@ SepResult gene_sep_fused(const PairData& D, double K1, double K2, double P1, dou
         int n = ++done;
         if (n % step == 0 || n == B) std::fprintf(stderr, "\r  block %d / %d", n, B);
     }
-    std::fprintf(stderr, "\n");
+    std::fprintf(stderr, "  %.1f s\n", secs(t_jk));
 
     SepResult r;
     fill_derived(r, h1obs * c1, h2obs * c2, cors.cor, h1l_b, h2l_b, cors.cor_b, lam1, lam2, d1, d2);
