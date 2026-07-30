@@ -238,7 +238,7 @@ gensep --se-method jackknife \
 
 gensep converts each AUC to a PRS accuracy internally,
 `Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped — the same chain the
-real-data pipeline uses), then evaluates the finite-PRS case-case AUC. Four **point-only**
+real-data pipeline uses), then evaluates the finite-PRS case-case AUC. Six **point-only**
 rows are appended (`SE` is always `NA`), and the footer gains `Rsq1 Rsq2`:
 
 | Row | Meaning |
@@ -247,6 +247,7 @@ rows are appended (`SE` is always `NA`), and the footer gains `Rsq1 Rsq2`:
 | `prs_auc_lo` | finite-PRS leading-order AUC (weights `w_LO`) |
 | `h2cc_prs` | PRS case-case heritability, `V_PRS / (V_PRS + 4)` |
 | `prs_eff` | PRS efficiency `V_PRS / VS_tgv ∈ [0, 1]` — fraction of the genetic separation the PRS captures |
+| `prs_w1` / `prs_w2` | the optimal `w_B` weights for combining the two subtype PRS into the case-case discriminant: `D = prs_w1·PRS1 + prs_w2·PRS2` (higher `D` favours subtype 1). Scale is arbitrary — only the ratio matters |
 
 `prs_auc ≤ auc` always (a finite PRS cannot beat the genetic ceiling). No SE is propagated
 for the PRS-based quantities. The computation is a port of

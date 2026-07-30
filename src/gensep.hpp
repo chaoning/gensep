@@ -39,6 +39,7 @@ struct SepResult {
     // and the PRS accuracies Rsq_i derived from auc_i. NaN when not requested / out of
     // domain. See derive_prs() / fill_prs_auc() in gensep.cpp.
     double prs_auc = NAN, prs_auc_lo = NAN, h2cc_prs = NAN, prs_eff = NAN;
+    double prs_w1 = NAN, prs_w2 = NAN;   // optimal PRS-combination weights: D = w1*PRS1 + w2*PRS2
     double Rsq1 = NAN, Rsq2 = NAN;   // PRS accuracies derived from auc1/auc2 (diagnostic)
     bool have_prs = false;
 };

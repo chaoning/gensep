@@ -94,10 +94,13 @@ static double auc_to_corr_liab(double auc, double K) {
 // derive(). Two 2x2 inverses in closed form (no Eigen). auc_b uses moment-corrected
 // weights w_B, auc_lo the leading-order weights w_LO (both with the full moment
 // denominator). NaN where out of domain (Sigma/B singular, variance<=0).
-struct PrsDerived { double auc_b, auc_lo, h2cc_prs, prs_eff; };
+// w1/w2 are the moment-corrected optimal weights (w_B) for the finite-PRS discriminant,
+// expressed as coefficients on the two subtype PRS: D = w1*PRS1 + w2*PRS2, oriented so a
+// higher D favours subtype 1 (AUC>=0.5). Scale is arbitrary (only the ratio matters).
+struct PrsDerived { double auc_b, auc_lo, h2cc_prs, prs_eff, w1, w2; };
 static PrsDerived derive_prs(double hsq1, double hsq2, double rg, double Rsq1, double Rsq2,
                              double lam1, double lam2, double del1, double del2) {
-    PrsDerived o{NAN, NAN, NAN, NAN};
+    PrsDerived o{NAN, NAN, NAN, NAN, NAN, NAN};
     if (!(hsq1 > 0 && hsq2 > 0 && Rsq1 > 0 && Rsq2 > 0)) return o;
     double h1 = std::sqrt(hsq1), h2 = std::sqrt(hsq2);
     double r1 = std::sqrt(Rsq1), r2 = std::sqrt(Rsq2);
@@ -132,6 +135,10 @@ static PrsDerived derive_prs(double hsq1, double hsq2, double rg, double Rsq1, d
     if (detB != 0.0 && std::isfinite(detB)) {
         double wb1 = (B22 * a1 - B12 * a2) / detB, wb2 = (-B12 * a1 + B11 * a2) / detB;
         o.auc_b = auc_for_w(wb1, wb2);
+        // report w_B as coefficients on (PRS1, PRS2): w is in the X=[g1,-g2] basis, so
+        // D = wb1*g1 - wb2*g2. Orient (flip if needed) so a higher D favours subtype 1.
+        if (wb1 * a1 + wb2 * a2 < 0) { wb1 = -wb1; wb2 = -wb2; }
+        o.w1 = wb1; o.w2 = -wb2;
     }
     return o;
 }
@@ -154,6 +161,7 @@ static void fill_prs_auc(SepResult& r, double auc1, double auc2, double K1, doub
                               lam1, lam2, del1, del2);
     r.prs_auc = p.auc_b; r.prs_auc_lo = p.auc_lo;
     r.h2cc_prs = p.h2cc_prs; r.prs_eff = p.prs_eff;
+    r.prs_w1 = p.w1; r.prs_w2 = p.w2;
 }
 
 // Shared core: given liability-scale point + per-block (h1,h2,rg), fill all derived
@@ -395,6 +403,8 @@ void write_gensep(const std::string& prefix, const SepResult& r) {
         row("prs_auc_lo", r.prs_auc_lo, NAN);
         row("h2cc_prs",   r.h2cc_prs,   NAN);
         row("prs_eff",    r.prs_eff,    NAN);
+        row("prs_w1",     r.prs_w1,     NAN);   // D = w1*PRS1 + w2*PRS2 (optimal combination)
+        row("prs_w2",     r.prs_w2,     NAN);
     }
     std::fprintf(f, "# rg_used %.6f  lam1 %.6f  lam2 %.6f"
                  "  n_used(VS,h2cc) %d  n_used(auc) %d",
