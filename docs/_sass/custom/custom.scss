@@ -1,0 +1,10 @@
+// GenSep — small overrides on top of Just the Docs.
+
+// A little more room for wide command lines and the tables.
+.main-content-wrap { max-width: 60rem; }
+
+// Inline code inside table cells and lists wraps instead of overflowing on phones.
+td code, li code { white-space: normal; }
+
+// Tables: lighter header, no zebra background clash with code.
+.table-wrapper { box-shadow: none; border: 1px solid $border-color; }

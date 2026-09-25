@@ -1,8 +1,18 @@
 ---
-layout: page
 title: Tutorial
-description:
-order: 3
+nav_order: 3
+permalink: /documentation/03_Tutorial.html
+---
+
+# Tutorial
+{: .no_toc }
+
+## Table of contents
+{: .no_toc .text-delta }
+
+- TOC
+{:toc}
+
 ---
 
 This tutorial follows the current command-line workflow implemented in the codebase. The
