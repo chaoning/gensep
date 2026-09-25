@@ -10,7 +10,3 @@ third_party/eigen
 # Editor / OS cruft
 *.swp
 .DS_Store
-
-# Jekyll build artefacts (docs site is built by GitHub Pages)
-docs/.jekyll-cache
-docs/_site

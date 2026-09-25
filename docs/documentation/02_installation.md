@@ -1,18 +1,8 @@
 ---
+layout: page
 title: Installation
-nav_order: 2
-permalink: /documentation/02_installation.html
----
-
-# Installation
-{: .no_toc }
-
-## Table of contents
-{: .no_toc .text-delta }
-
-- TOC
-{:toc}
-
+description: ~
+order: 2
 ---
 
 GenSep is a single self-contained C++17 command-line tool. There is no external library

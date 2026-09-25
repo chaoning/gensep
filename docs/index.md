@@ -1,24 +1,10 @@
 ---
-title: Home
-layout: home
-nav_order: 1
+layout: full
+homepage: true
+disable_anchors: true
 description: Quantifying the genetic separability of disease subtypes
-permalink: /
 ---
-# GenSep
-{: .fs-9 }
-
-Quantifying the genetic separability of disease subtypes.
-{: .fs-6 .fw-300 }
-
-[Download GenSep (Linux)](https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Installation](documentation/02_installation.html){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Tutorial](documentation/03_Tutorial.html){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/chaoning/gensep){: .btn .fs-5 .mb-4 .mb-md-0 }
-
----
-
-## Overview
+## GenSep Overview
 
 **GenSep** implements a liability-threshold framework for **case–case subtype
 discrimination** — how well genetics can tell two disease subtypes apart. The central
@@ -52,6 +38,8 @@ GenSep is an open-source, statically linked C++17 program with no runtime depend
 (Eigen is header-only and vendored). GenSep is developed and tested on 64-bit Linux, for
 which a prebuilt executable is provided; on Windows it runs under WSL, and on macOS a Linux
 container or VM is the supported route.
+
+## User's Guide: [Installation](./documentation/02_installation.html) · [Tutorial](./documentation/03_Tutorial.html)
 
 ## Citation
 Chao Ning, Jasper Hof and Doug Speed. Quantifying the genetic separability of disease
