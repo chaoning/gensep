@@ -5,7 +5,7 @@ description: ~
 order: 2
 ---
 
-`gensep` is a single self-contained C++17 command-line tool. There is no external library
+GenSep is a single self-contained C++17 command-line tool. There is no external library
 to install: [Eigen](https://eigen.tuxfamily.org) is header-only and vendored under
 `third_party/`, and the program links statically. Use the prebuilt binary, or build from
 source with a plain `make`.
@@ -13,7 +13,7 @@ source with a plain `make`.
 ## 1. Prebuilt Linux executable
 
 A statically compiled executable for 64-bit Linux systems is available:
-[**gensep Linux Executable**](https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep).
+[**GenSep Linux Executable**](https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep).
 It has no runtime dependencies (`ldd ./gensep` → "not a dynamic executable"), so it can be
 used directly on compatible systems:
 

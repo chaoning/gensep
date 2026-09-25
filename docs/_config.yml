@@ -2,13 +2,13 @@
 remote_theme: allejo/jekyll-docs-theme
 
 # Project information
-name: gensep
+name: GenSep
 description: "Quantifying the genetic separability of disease subtypes — oracle & finite-PRS case–case AUC from GWAS summaries or h2/rg estimates."
 
 project:
   version: 1.0.0
   download_url: https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep
-  download_text: "Download gensep"
+  download_text: "Download GenSep"
 
 # License information
 license:

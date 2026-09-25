@@ -9,7 +9,7 @@ This tutorial follows the current command-line workflow implemented in the codeb
 executable is assumed to be on your `PATH` as `gensep`; if you built from source and it is
 not, replace `gensep` with the full path, e.g. `./gensep`.
 
-`gensep` is one command. A single required switch, **`--se-method`**, selects both the
+GenSep is one command. A single required switch, **`--se-method`**, selects both the
 input you provide and how the standard error is computed:
 
 | `--se-method` | Input | SE for VS / h2cc / auc |
@@ -64,7 +64,7 @@ gensep --se-method jackknife \
 - **`--cutoff`** — exclude strong-effect loci: drop any SNP explaining ≥ `cutoff` of
   phenotypic variance (`rho² = chi/(chi+n)`) in **either** trait, since such loci can bias
   SumHer h²/rg (as LDAK `--sum-cors --cutoff`). Off by default; must be in `(0, 0.5)`,
-  e.g. `--cutoff 0.01`. If not set and some SNP exceeds 1%, gensep prints a reminder. Note
+  e.g. `--cutoff 0.01`. If not set and some SNP exceeds 1%, GenSep prints a reminder. Note
   that with well-powered GWAS (large `n`) per-SNP variance explained is small, so `0.01`
   often excludes nothing.
 - **`--intercept`** — `YES` or `NO` (default `NO`). `NO`: each SNP heritability is fit with
@@ -221,7 +221,7 @@ A one-line summary of the same numbers is also printed to standard output.
 
 `auc` above is the genetic **ceiling** — the AUC if the total genetic value were known
 exactly. If you also pass the per-subtype **PRS case/control AUC** measured on a test set,
-gensep reports the AUC achievable with those finite-accuracy PRS. These options work in
+GenSep reports the AUC achievable with those finite-accuracy PRS. These options work in
 **every** `--se-method` mode (they use only the point `hsq*_liab`/`rg`):
 
 ```bash
@@ -236,7 +236,7 @@ gensep --se-method jackknife \
   Both-or-neither; each must lie in `(0.5, 0.9999)` (the upper bound is the
   `auc_to_corr_liab` domain — an AUC `≥ 0.9999` is rejected rather than silently `NA`).
 
-gensep converts each AUC to a PRS accuracy internally,
+GenSep converts each AUC to a PRS accuracy internally,
 `Rsq_i = auc_to_corr_liab(auc_i, K_i)² / hsq_i_liab` (clipped — the same chain the
 real-data pipeline uses), then evaluates the finite-PRS case-case AUC. Six **point-only**
 rows are appended (`SE` is always `NA`), and the footer gains `Rsq1 Rsq2`:
