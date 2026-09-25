@@ -35,7 +35,7 @@ gensep --se-method jackknife \
        --summary trait1.summaries \
        --summary2 trait2.summaries \
        --K1 0.01 --K2 0.02 \
-       --P1 0.5  --P2 0.5 \
+       --P1 0.3  --P2 0.45 \
        --num-blocks 200 \
        --out output/pair
 ```
@@ -55,11 +55,18 @@ gensep --se-method jackknife \
   where `Predictor` is the SNP ID (matched against the tagging file), `A1`/`A2` are the
   alleles, `Z` is the signed Z-score, and `n` is the per-SNP sample size. Non-numeric or
   malformed `Z`/`n` fields are rejected rather than silently coerced.
-- **`--K1` / `--K2`** — population **prevalences** of the two subtypes (each in `(0, 1)`).
-  These drive the selection intensity λ and the Lee observed→liability transform.
-- **`--P1` / `--P2`** — the **sample case fractions** of the two subtypes (each in
-  `(0, 1)`). These are not stored in the summaries, so you must supply them; they enter the
-  Lee factor.
+- **`--K1` / `--K2`** — population **prevalences** of subtype 1 and subtype 2 (each in
+  `(0, 1)`): the fraction of the general population affected by that subtype. These drive
+  the selection intensity λ and the Lee observed→liability transform. `K1` and `K2` are
+  independent quantities and need not sum to 1 (or to the prevalence of the parent
+  disease).
+- **`--P1` / `--P2`** — the **case fractions in each GWAS sample** (each in `(0, 1)`):
+  `P1 = N_case / (N_case + N_control)` for the GWAS of subtype 1 (`--summary`), and
+  likewise `P2` for the GWAS of subtype 2 (`--summary2`). Each GWAS has its own case and
+  control set, so `P1` and `P2` are unrelated and need not sum to 1; e.g. two case–control
+  GWAS with 3,000 and 12,000 cases against the same 300,000 controls have `P1 ≈ 0.0099`
+  and `P2 ≈ 0.0385`. These are not stored in the summaries, so you must supply them;
+  they enter the Lee factor.
 - **`--num-blocks`** — number of jackknife blocks (default `200`, must be ≥ 2).
 - **`--cutoff`** — exclude strong-effect loci: drop any SNP explaining ≥ `cutoff` of
   phenotypic variance (`rho² = chi/(chi+n)`) in **either** trait, since such loci can bias
@@ -148,7 +155,7 @@ quantities directly.
 ```bash
 gensep --se-method mc \
        --h1 0.10 --h2 0.15 --rg 0.30 \
-       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
+       --K1 0.01 --K2 0.02 --P1 0.3 --P2 0.45 \
        --se-h1 0.02 --se-h2 0.03 --se-rg 0.10 \
        --num-draws 100000 --seed 1 \
        --out output/pair_point
@@ -177,7 +184,7 @@ the SE column is `NA`. Passing any `--se-*` with `none` is an error (and, conver
 ```bash
 gensep --se-method none \
        --h1 0.10 --h2 0.15 --rg 0.30 \
-       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
+       --K1 0.01 --K2 0.02 --P1 0.3 --P2 0.45 \
        --out output/pair_point_only
 ```
 
@@ -227,7 +234,7 @@ GenSep reports the AUC achievable with those finite-accuracy PRS. These options 
 ```bash
 gensep --se-method jackknife \
        --tagfile HumDef.tagging --summary trait1.summaries --summary2 trait2.summaries \
-       --K1 0.01 --K2 0.02 --P1 0.5 --P2 0.5 \
+       --K1 0.01 --K2 0.02 --P1 0.3 --P2 0.45 \
        --auc1 0.75 --auc2 0.68 \
        --out output/pair
 ```
@@ -256,13 +263,88 @@ for the PRS-based quantities. The computation is a port of
 ## 5. Input rules and validation
 
 - `--se-method` is required; `--K1/--K2/--P1/--P2` must all lie in `(0, 1)`, on **every**
-  route.
+  route. Neither pair is required to sum to 1 (see [Inputs](#inputs)).
 - All numeric options are parsed strictly: a bad value such as `--h1 foo` or
   `--num-draws 3.5` produces a clear error instead of a crash or a silent `0`.
 - SEs must be ≥ 0; `--num-draws` (for `mc`) must be ≥ 2; `--num-blocks` must be ≥ 2.
 - The tagging file must be single-category; summary-statistic numeric fields are validated.
 
-## 6. Summary workflow
+## 6. Worked example: type 1 vs type 2 diabetes in FinnGen
+
+A complete run on public data, from download to result, takes about ten minutes (most of
+it downloading). It uses two [FinnGen](https://www.finngen.fi/en) release-13 GWAS
+(GRCh38; [Kurki *et al.*, *Nature* 2023](https://doi.org/10.1038/s41586-022-05473-8)),
+which are freely downloadable from FinnGen's public bucket, and the ready-made Finnish
+tagging file from the table above. Case and control counts are from the
+[FinnGen R13 manifest](https://storage.googleapis.com/finngen-public-data-r13/summary_stats/finngen_R13_manifest.tsv).
+
+| Subtype | FinnGen endpoint | Cases / controls | Download (~0.8 GB each) |
+| --- | --- | --- | --- |
+| Type 1 diabetes | `T1D_WIDE` (wide definition) | 11,197 / 396,409 | [finngen_R13_T1D_WIDE.gz](https://storage.googleapis.com/finngen-public-data-r13/summary_stats/finngen_R13_T1D_WIDE.gz) |
+| Type 2 diabetes | `T2D` (definitions combined) | 89,727 / 396,292 | [finngen_R13_T2D.gz](https://storage.googleapis.com/finngen-public-data-r13/summary_stats/finngen_R13_T2D.gz) |
+
+The whole example is scripted in
+[`examples/run_finngen_t1d_t2d.sh`](https://github.com/chaoning/gensep/blob/main/examples/run_finngen_t1d_t2d.sh);
+the steps it runs are:
+
+**1. Download.**
+
+```bash
+FG=https://storage.googleapis.com/finngen-public-data-r13/summary_stats
+wget $FG/finngen_R13_T1D_WIDE.gz
+wget $FG/finngen_R13_T2D.gz
+wget https://github.com/chaoning/gensep/releases/download/tagging-v1/tag.HAPMAP.FIN.tagging.gz
+gunzip tag.HAPMAP.FIN.tagging.gz
+```
+
+**2. Convert to `.summaries`.** FinnGen files report `beta`/`sebeta` for the `alt`
+allele and carry no per-SNP sample size, so
+[`examples/finngen_to_summaries.py`](https://github.com/chaoning/gensep/blob/main/examples/finngen_to_summaries.py)
+writes `Predictor A1 A2 Z n` with `A1 = alt`, `A2 = ref`, `Z = beta/sebeta` and
+`n = cases + controls`, dropping variants without an rsID and rsIDs that occur more than
+once. `--tagfile` keeps only the ~1.1M tagging SNPs (GenSep uses no others), which shrinks
+each output to ~34 MB.
+
+```bash
+python3 finngen_to_summaries.py --in finngen_R13_T1D_WIDE.gz --cases 11197 --controls 396409 \
+        --tagfile tag.HAPMAP.FIN.tagging --out t1d.summaries
+python3 finngen_to_summaries.py --in finngen_R13_T2D.gz --cases 89727 --controls 396292 \
+        --tagfile tag.HAPMAP.FIN.tagging --out t2d.summaries
+```
+
+**3. Run GenSep.** `K1`/`K2` are the population prevalences used for this pair in the
+paper (0.5% for type 1, 7% for type 2; Supplementary Table 1); `P1 = 11,197 / 407,606 =
+0.02747` and `P2 = 89,727 / 486,019 = 0.18462` are the case fractions of the two GWAS.
+
+```bash
+gensep --se-method jackknife \
+       --tagfile tag.HAPMAP.FIN.tagging \
+       --summary t1d.summaries --summary2 t2d.summaries \
+       --K1 0.005 --K2 0.07 --P1 0.02747 --P2 0.18462 \
+       --num-blocks 200 --out finngen_t1d_t2d
+```
+
+This takes about 30 s single-threaded. The log reports ~1,095,000 SNPs matched for both
+traits, and `finngen_t1d_t2d.gensep` should read (also in
+[`examples/finngen_t1d_t2d.expected.gensep`](https://github.com/chaoning/gensep/blob/main/examples/finngen_t1d_t2d.expected.gensep)):
+
+```
+Quantity Value SE
+hsq1_obs 0.073107 0.040882
+hsq1_liab 0.323938 0.181148
+hsq2_obs 0.126523 0.005181
+hsq2_liab 0.197582 0.008091
+rg 0.297508 0.068786
+VS 2.601128 1.360858
+h2cc 0.394043 0.156602
+auc 0.887240 0.096638
+auc_lo 0.872945 0.087810
+```
+
+The two subtypes are genetically well separated: `rg` ≈ 0.30 and an oracle case–case AUC
+of 0.89 (SE 0.10). The large SE on `hsq1` reflects the modest number of type 1 cases.
+
+## 7. Summary workflow
 
 1. **From GWAS**: build a tagging file with LDAK
    ([Calculate Taggings](https://dougspeed.com/calculate-taggings/)), prepare the two

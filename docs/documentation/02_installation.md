@@ -18,9 +18,14 @@ It has no runtime dependencies (`ldd ./gensep` → "not a dynamic executable"), 
 used directly on compatible systems:
 
 ```bash
+wget https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep
 chmod +x gensep
 ./gensep --help
 ```
+
+GenSep is developed and tested on Linux. Windows users can run the Linux executable under
+WSL; on macOS, use a Linux container or VM (the `Makefile` assumes GCC with a fully static
+link and OpenMP, so a native macOS build is untested).
 
 This is the quickest option. To modify the code or rebuild for your environment, build from
 source instead (below).

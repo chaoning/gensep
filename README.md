@@ -39,8 +39,8 @@ GenSep computes these three interchangeable ways, all writing the same output:
 Every quantity comes with a standard error. GenSep is a self-contained C++ tool
 accompanying [*Quantifying the genetic separability of disease subtypes*](https://doi.org/10.64898/2026.09.18.26363395)
 (Ning, Hof & Speed, *medRxiv* 2026);
-the heritability and genetic-correlation solvers are a port of LDAK SumHer (`--sum-hers` /
-`--sum-cors`).
+the heritability and genetic-correlation solvers are a C++ re-implementation of SumHer
+(LDAK `--sum-hers` / `--sum-cors`).
 
 ## Installation
 
@@ -56,9 +56,14 @@ It has no runtime dependencies (`ldd` → "not a dynamic executable") and can be
 directly on compatible systems:
 
 ```bash
+wget https://github.com/chaoning/gensep/raw/refs/heads/main/app/linux/gensep
 chmod +x gensep
 ./gensep --help
 ```
+
+GenSep is developed and tested on Linux. Windows users can run the Linux executable under
+WSL; on macOS, use a Linux container or VM (the `Makefile` assumes GCC with a fully static
+link and OpenMP, so a native macOS build is untested).
 
 To build from source instead, follow the steps below.
 
@@ -113,13 +118,20 @@ stripped), so it runs on any compatible Linux host with no runtime dependencies.
 
 See the full tutorial in our [documentation](https://chaoning.github.io/gensep).
 
+A complete worked example on public data — type 1 vs type 2 diabetes from FinnGen R13 with
+the ready-made Finnish tagging file — is in
+[`examples/`](examples/) (download, conversion to `.summaries`, GenSep run, expected
+output), and walked through in the
+[tutorial](https://chaoning.github.io/gensep/documentation/03_Tutorial.html#6-worked-example-type-1-vs-type-2-diabetes-in-finngen).
+
 ## Citing the work
 
 > Chao Ning, Jasper Hof and Doug Speed. Quantifying the genetic separability of disease
 > subtypes. *medRxiv* (2026). [doi:10.64898/2026.09.18.26363395](https://doi.org/10.64898/2026.09.18.26363395)
 
-The heritability and genetic-correlation solvers are a port of SumHer (Speed & Balding,
-*Nature Genetics* 2019), implemented in [LDAK](https://dougspeed.com/ldak/).
+The heritability and genetic-correlation solvers are a C++ re-implementation of SumHer
+(Speed & Balding, *Nature Genetics* 2019), originally implemented in
+[LDAK](https://dougspeed.com/ldak/).
 
 ## License
 

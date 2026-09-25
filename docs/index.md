@@ -35,7 +35,9 @@ GenSep computes these three interchangeable ways:
   the AUC achievable with those polygenic scores and the **PRS recovery** `V_PRS / V_S`.
 
 GenSep is an open-source, statically linked C++17 program with no runtime dependencies
-(Eigen is header-only and vendored).
+(Eigen is header-only and vendored). GenSep is developed and tested on 64-bit Linux, for
+which a prebuilt executable is provided; on Windows it runs under WSL, and on macOS a Linux
+container or VM is the supported route.
 
 ## User's Guide: [Installation](./documentation/02_installation.html) · [Tutorial](./documentation/03_Tutorial.html)
 
@@ -44,12 +46,12 @@ Chao Ning, Jasper Hof and Doug Speed. Quantifying the genetic separability of di
 subtypes. *medRxiv* (2026).
 [doi:10.64898/2026.09.18.26363395](https://doi.org/10.64898/2026.09.18.26363395)
 
-The heritability and genetic-correlation solvers are a port of
-SumHer (Speed & Balding, *Nature Genetics* 2019), implemented in
+The heritability and genetic-correlation solvers are a C++ re-implementation of
+SumHer (Speed & Balding, *Nature Genetics* 2019), originally implemented in
 [LDAK](https://dougspeed.com/ldak/).
 
 ## Contact
 For questions, open an issue on [GitHub](https://github.com/chaoning/gensep/issues) or
-email me at ningchao91@gmail.com
+email me at chao.ning@qgg.au.dk
 
 For other tools, see [chaoning.github.io/software.html](https://chaoning.github.io/software.html).
