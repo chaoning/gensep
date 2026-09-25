@@ -40,8 +40,11 @@ gensep is an open-source, statically linked C++17 program with no runtime depend
 ## User's Guide: [Installation](./documentation/02_installation.html) · [Tutorial](./documentation/03_Tutorial.html)
 
 ## Citation
-Chao Ning, Jasper Hof and Doug Speed. *Quantifying the Genetic Separability of Disease
-Subtypes* (in preparation). The heritability and genetic-correlation solvers are a port of
+Chao Ning, Jasper Hof and Doug Speed. Quantifying the genetic separability of disease
+subtypes. *medRxiv* (2026).
+[doi:10.64898/2026.09.18.26363395](https://doi.org/10.64898/2026.09.18.26363395)
+
+The heritability and genetic-correlation solvers are a port of
 SumHer (Speed & Balding, *Nature Genetics* 2019), implemented in
 [LDAK](https://dougspeed.com/ldak/).
 

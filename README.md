@@ -37,7 +37,8 @@ their genetic effects are largely shared. From `V_S`, `gensep` derives:
    PRS captures).
 
 Every quantity comes with a standard error. `gensep` is a self-contained C++ tool
-accompanying *Quantifying the Genetic Separability of Disease Subtypes* (Ning, Hof & Speed);
+accompanying [*Quantifying the genetic separability of disease subtypes*](https://doi.org/10.64898/2026.09.18.26363395)
+(Ning, Hof & Speed, *medRxiv* 2026);
 the heritability and genetic-correlation solvers are a port of LDAK SumHer (`--sum-hers` /
 `--sum-cors`).
 
@@ -114,8 +115,8 @@ See the full tutorial in our [documentation](https://chaoning.github.io/gensep).
 
 ## Citing the work
 
-> Chao Ning, Jasper Hof and Doug Speed. *Quantifying the Genetic Separability of Disease
-> Subtypes* (in preparation).
+> Chao Ning, Jasper Hof and Doug Speed. Quantifying the genetic separability of disease
+> subtypes. *medRxiv* (2026). [doi:10.64898/2026.09.18.26363395](https://doi.org/10.64898/2026.09.18.26363395)
 
 The heritability and genetic-correlation solvers are a port of SumHer (Speed & Balding,
 *Nature Genetics* 2019), implemented in [LDAK](https://dougspeed.com/ldak/).
