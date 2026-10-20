@@ -10,3 +10,6 @@ third_party/eigen
 # Editor / OS cruft
 *.swp
 .DS_Store
+
+# Local planning notes (not published)
+plan.md
